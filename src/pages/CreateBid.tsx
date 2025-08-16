@@ -8,23 +8,37 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Upload, FileText, Calendar, Building2, Target } from "lucide-react";
 import { Header } from "@/components/layout/header";
+import { useBidStore } from "@/lib/stores/bid-store";
 
 export default function CreateBid() {
   const navigate = useNavigate();
+  const { addBid } = useBidStore();
   const [formData, setFormData] = useState({
     title: "",
     client: "",
     submissionDeadline: "",
-    stage: "",
+    stage: "" as "discovery" | "proposal" | "review" | "submitted" | "",
     description: "",
     files: [] as File[]
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Create mock bid ID and redirect
-    const bidId = Math.random().toString(36).substr(2, 9);
-    navigate(`/bids/${bidId}/edit`);
+    
+    if (!formData.title || !formData.client || !formData.submissionDeadline || !formData.stage) {
+      return;
+    }
+
+    // Create the bid
+    addBid({
+      title: formData.title,
+      client: formData.client,
+      submissionDeadline: formData.submissionDeadline,
+      stage: formData.stage
+    });
+
+    // Navigate back to home to see the new bid
+    navigate('/');
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -103,7 +117,7 @@ export default function CreateBid() {
 
                 <div className="space-y-2">
                   <Label htmlFor="stage">Current Stage *</Label>
-                  <Select onValueChange={(value) => setFormData(prev => ({ ...prev, stage: value }))}>
+                  <Select onValueChange={(value: "discovery" | "proposal" | "review" | "submitted") => setFormData(prev => ({ ...prev, stage: value }))}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select current stage" />
                     </SelectTrigger>

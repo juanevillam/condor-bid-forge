@@ -12,15 +12,24 @@ import { SourcesPanel } from "@/components/bid-editor/sources-panel";
 import { ChatPanel } from "@/components/bid-editor/chat-panel";
 import { ActionsPanel } from "@/components/bid-editor/actions-panel";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useBidStore } from "@/lib/stores/bid-store";
 import { Bid, ChatMessage } from "@/lib/types";
-import { mockBid, mockMessages } from "@/lib/mock-data";
+import { mockMessages } from "@/lib/mock-data";
 
 export default function BidEditor() {
   const { id } = useParams();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const { getBid, updateBid } = useBidStore();
   
-  const [bid, setBid] = useState<Bid>(mockBid);
+  const bid = getBid(id!);
+  
+  // Redirect if bid not found
+  useEffect(() => {
+    if (!bid) {
+      navigate('/');
+    }
+  }, [bid, navigate]);
   const [messages, setMessages] = useState<ChatMessage[]>(mockMessages);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [leftPanelOpen, setLeftPanelOpen] = useState(!isMobile);
@@ -35,8 +44,10 @@ export default function BidEditor() {
   }, [isMobile]);
 
   const handleTitleSave = (newTitle: string) => {
-    setBid(prev => ({ ...prev, title: newTitle }));
-    setIsEditingTitle(false);
+    if (bid) {
+      updateBid(bid.id, { title: newTitle });
+      setIsEditingTitle(false);
+    }
   };
 
   const handleAddMessage = (message: ChatMessage) => {
@@ -75,6 +86,10 @@ export default function BidEditor() {
     return children;
   };
 
+  if (!bid) {
+    return null;
+  }
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Header />
@@ -87,7 +102,7 @@ export default function BidEditor() {
               <Button 
                 variant="ghost" 
                 size="sm" 
-                onClick={() => navigate('/bids/new')}
+                onClick={() => navigate('/')}
                 className="p-2"
               >
                 <ArrowLeft className="w-4 h-4" />
