@@ -41,18 +41,20 @@ const Index = () => {
       <main className="container max-w-6xl mx-auto py-8 px-6">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-2xl font-semibold text-foreground">
-            My bids
+            {bids.length === 0 ? "Welcome to Bid Proponent" : "My bids"}
           </h1>
           
-          <Select value={sortBy} onValueChange={(value: 'recent' | 'title') => setSortBy(value)}>
-            <SelectTrigger className="w-40">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="recent">Most recent</SelectItem>
-              <SelectItem value="title">By title</SelectItem>
-            </SelectContent>
-          </Select>
+          {bids.length > 0 && (
+            <Select value={sortBy} onValueChange={(value: 'recent' | 'title') => setSortBy(value)}>
+              <SelectTrigger className="w-40">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="recent">Most recent</SelectItem>
+                <SelectItem value="title">By title</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
         </div>
 
         {bids.length === 0 ? (
