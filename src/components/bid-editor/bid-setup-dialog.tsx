@@ -31,16 +31,13 @@ export function BidSetupDialog({ bid, open, onOpenChange, onComplete, onCancel }
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.client || !formData.submissionDeadline || !formData.stage) {
+    if (!formData.title || !formData.client || !formData.submissionDeadline || !formData.stage) {
       return;
     }
 
-    // Default empty title to "Untitled bid"
-    const finalTitle = formData.title.trim() || "Untitled bid";
-
     // Update the existing bid with the form data
     updateBid(bid.id, {
-      title: finalTitle,
+      title: formData.title,
       client: formData.client,
       submissionDeadline: formData.submissionDeadline,
       stage: formData.stage
@@ -58,7 +55,7 @@ export function BidSetupDialog({ bid, open, onOpenChange, onComplete, onCancel }
     }
   };
 
-  const isFormValid = formData.client && formData.submissionDeadline && formData.stage;
+  const isFormValid = formData.title && formData.client && formData.submissionDeadline && formData.stage;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

@@ -93,8 +93,7 @@ const Index = () => {
 
   const handleEditSubmit = () => {
     if (selectedBid) {
-      const finalTitle = editTitle.trim() || "Untitled bid";
-      updateBid(selectedBid.id, { title: finalTitle });
+      updateBid(selectedBid.id, { title: editTitle.trim() });
       setEditDialogOpen(false);
       setSelectedBid(null);
       setEditTitle('');
