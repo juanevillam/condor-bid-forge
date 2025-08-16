@@ -25,6 +25,36 @@ export const mockBid: Bid = {
   ]
 };
 
+export const mockBids: Bid[] = [
+  {
+    id: '1',
+    title: 'Federal Infrastructure Modernization RFP',
+    client: 'Department of Transportation',
+    submissionDeadline: '2024-10-15',
+    stage: 'discovery',
+    createdAt: '2024-08-16',
+    deadlines: []
+  },
+  {
+    id: '2',
+    title: 'Healthcare System Integration',
+    client: 'Regional Medical Center',
+    submissionDeadline: '2024-09-30',
+    stage: 'proposal',
+    createdAt: '2024-08-14',
+    deadlines: []
+  },
+  {
+    id: '3',
+    title: 'Smart City IoT Platform',
+    client: 'Metro City Council',
+    submissionDeadline: '2024-11-20',
+    stage: 'discovery',
+    createdAt: '2024-08-12',
+    deadlines: []
+  }
+];
+
 export const mockSources: Source[] = [
   {
     id: '1',
