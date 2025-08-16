@@ -4,7 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Plus, FileText, MoreVertical, Folder } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Plus, FileText, MoreVertical, Folder, Edit3, Trash2, X } from "lucide-react";
 import { Header } from "@/components/layout/header";
 import { useBidStore } from "@/lib/stores/bid-store";
 import type { Bid } from "@/lib/types";
@@ -14,7 +17,11 @@ const SORT_STORAGE_KEY = 'bid-sort-preference';
 const Index = () => {
   const navigate = useNavigate();
   const [sortBy, setSortBy] = useState<'recent' | 'title'>('recent');
-  const { bids, deleteBid } = useBidStore();
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedBid, setSelectedBid] = useState<Bid | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const { bids, deleteBid, updateBid } = useBidStore();
 
   // Load sort preference from localStorage on mount
   useEffect(() => {
@@ -69,6 +76,57 @@ const Index = () => {
   const getSourceCount = (bid: Bid) => {
     // Mock source count - in real app this would come from the bid data
     return Math.floor(Math.random() * 5);
+  };
+
+  const handleEditClick = (bid: Bid, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedBid(bid);
+    setEditTitle(bid.title);
+    setEditDialogOpen(true);
+  };
+
+  const handleDeleteClick = (bid: Bid, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedBid(bid);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleEditSubmit = () => {
+    if (selectedBid) {
+      updateBid(selectedBid.id, { title: editTitle.trim() });
+      setEditDialogOpen(false);
+      setSelectedBid(null);
+      setEditTitle('');
+    }
+  };
+
+  const handleEditCancel = () => {
+    setEditDialogOpen(false);
+    setSelectedBid(null);
+    setEditTitle('');
+  };
+
+  const handleDeleteConfirm = () => {
+    if (selectedBid) {
+      deleteBid(selectedBid.id);
+      setDeleteDialogOpen(false);
+      setSelectedBid(null);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteDialogOpen(false);
+    setSelectedBid(null);
+  };
+
+  const handleEditKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleEditSubmit();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      handleEditCancel();
+    }
   };
 
   return (
@@ -151,13 +209,15 @@ const Index = () => {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={(e) => handleEditClick(bid, e)}>
+                          <Edit3 className="w-4 h-4 mr-2" />
+                          Edit title
+                        </DropdownMenuItem>
                         <DropdownMenuItem
                           className="text-destructive"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            deleteBid(bid.id);
-                          }}
+                          onClick={(e) => handleDeleteClick(bid, e)}
                         >
+                          <Trash2 className="w-4 h-4 mr-2" />
                           Delete bid
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -181,6 +241,58 @@ const Index = () => {
           </div>
         )}
       </main>
+
+      {/* Edit Title Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Edit bid title</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="title" className="text-right">
+                Title
+              </Label>
+              <Input
+                id="title"
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                onKeyDown={handleEditKeyDown}
+                className="col-span-3"
+                autoFocus
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={handleEditCancel}>
+              Cancel
+            </Button>
+            <Button onClick={handleEditSubmit}>
+              Accept
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Delete this bid?</DialogTitle>
+            <DialogDescription>
+              This action can't be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={handleDeleteCancel}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteConfirm}>
+              Accept
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
