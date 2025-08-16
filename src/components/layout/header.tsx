@@ -9,9 +9,6 @@ export function Header() {
       <div className="h-full px-6 flex items-center justify-between">
         {/* Logo/Brand */}
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
-            <span className="text-primary-foreground font-bold text-sm">C</span>
-          </div>
           <div>
             <h1 className="text-lg font-semibold">Condor AI</h1>
             <p className="text-xs text-muted-foreground">Bid Editor</p>
@@ -20,12 +17,6 @@ export function Header() {
 
         {/* Status & User Menu */}
         <div className="flex items-center gap-4">
-          {/* Connection Status */}
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <div className="status-dot"></div>
-            <span className="hidden sm:inline">Connected to AI</span>
-          </div>
-
           {/* User Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
