@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,16 +9,53 @@ import { Header } from "@/components/layout/header";
 import { useBidStore } from "@/lib/stores/bid-store";
 import type { Bid } from "@/lib/types";
 
+const SORT_STORAGE_KEY = 'bid-sort-preference';
+
 const Index = () => {
   const navigate = useNavigate();
   const [sortBy, setSortBy] = useState<'recent' | 'title'>('recent');
   const { bids, deleteBid } = useBidStore();
+
+  // Load sort preference from localStorage on mount
+  useEffect(() => {
+    const savedSort = localStorage.getItem(SORT_STORAGE_KEY) as 'recent' | 'title' | null;
+    if (savedSort && (savedSort === 'recent' || savedSort === 'title')) {
+      setSortBy(savedSort);
+    }
+  }, []);
+
+  // Save sort preference to localStorage when it changes
+  const handleSortChange = (value: 'recent' | 'title') => {
+    setSortBy(value);
+    localStorage.setItem(SORT_STORAGE_KEY, value);
+  };
   
   const sortedBids = [...bids].sort((a, b) => {
     if (sortBy === 'recent') {
+      // Most recent: createdAt descending, then title A→Z for ties
+      const dateComparison = new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      if (dateComparison !== 0) return dateComparison;
+      
+      // Tie-breaker: title A→Z, case-insensitive, handle empty titles
+      const titleA = (a.title || '').trim();
+      const titleB = (b.title || '').trim();
+      return titleA.localeCompare(titleB, undefined, { 
+        sensitivity: 'base', 
+        numeric: true 
+      });
+    } else {
+      // By title: title A→Z, then createdAt descending for ties
+      const titleA = (a.title || '').trim();
+      const titleB = (b.title || '').trim();
+      const titleComparison = titleA.localeCompare(titleB, undefined, { 
+        sensitivity: 'base', 
+        numeric: true 
+      });
+      if (titleComparison !== 0) return titleComparison;
+      
+      // Tie-breaker: createdAt descending
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     }
-    return a.title.localeCompare(b.title);
   });
 
   const formatDate = (dateString: string) => {
@@ -45,7 +82,7 @@ const Index = () => {
           </h1>
           
           {bids.length > 0 && (
-            <Select value={sortBy} onValueChange={(value: 'recent' | 'title') => setSortBy(value)}>
+            <Select value={sortBy} onValueChange={handleSortChange}>
               <SelectTrigger className="w-40">
                 <SelectValue />
               </SelectTrigger>
