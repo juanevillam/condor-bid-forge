@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +11,7 @@ import { Header } from "@/components/layout/header";
 import { SourcesPanel } from "@/components/bid-editor/sources-panel";
 import { ChatPanel } from "@/components/bid-editor/chat-panel";
 import { ActionsPanel } from "@/components/bid-editor/actions-panel";
+import { BidSetupDialog } from "@/components/bid-editor/bid-setup-dialog";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useBidStore } from "@/lib/stores/bid-store";
 import { Bid, ChatMessage } from "@/lib/types";
@@ -19,10 +20,11 @@ import { mockMessages } from "@/lib/mock-data";
 export default function BidEditor() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const isMobile = useIsMobile();
-  const { getBid, updateBid } = useBidStore();
+  const { getBid, updateBid, deleteBid } = useBidStore();
   
-  const bid = getBid(id!);
+  const [bid, setBid] = useState(() => getBid(id!));
   
   // Redirect if bid not found
   useEffect(() => {
@@ -30,10 +32,12 @@ export default function BidEditor() {
       navigate('/');
     }
   }, [bid, navigate]);
+  
   const [messages, setMessages] = useState<ChatMessage[]>(mockMessages);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [leftPanelOpen, setLeftPanelOpen] = useState(!isMobile);
   const [rightPanelOpen, setRightPanelOpen] = useState(!isMobile);
+  const [setupDialogOpen, setSetupDialogOpen] = useState(searchParams.get('setup') === '1');
 
   useEffect(() => {
     // On mobile, panels should be closed by default
@@ -46,12 +50,39 @@ export default function BidEditor() {
   const handleTitleSave = (newTitle: string) => {
     if (bid) {
       updateBid(bid.id, { title: newTitle });
+      setBid(getBid(bid.id));
       setIsEditingTitle(false);
     }
   };
 
   const handleAddMessage = (message: ChatMessage) => {
     setMessages(prev => [...prev, message]);
+  };
+
+  const handleSetupComplete = () => {
+    setSetupDialogOpen(false);
+    // Remove the setup parameter from URL
+    setSearchParams(params => {
+      params.delete('setup');
+      return params;
+    });
+    // Refresh bid data
+    setBid(getBid(id!));
+  };
+
+  const handleSetupCancel = () => {
+    // If the bid is empty/new, delete it and go back to home
+    if (bid && (!bid.title || !bid.client)) {
+      deleteBid(bid.id);
+      navigate('/');
+    } else {
+      setSetupDialogOpen(false);
+      // Remove the setup parameter from URL
+      setSearchParams(params => {
+        params.delete('setup');
+        return params;
+      });
+    }
   };
 
   const getStageColor = (stage: string) => {
@@ -246,6 +277,17 @@ export default function BidEditor() {
           </div>
         )}
       </div>
+
+      {/* Setup Dialog */}
+      {bid && (
+        <BidSetupDialog
+          bid={bid}
+          open={setupDialogOpen}
+          onOpenChange={setSetupDialogOpen}
+          onComplete={handleSetupComplete}
+          onCancel={handleSetupCancel}
+        />
+      )}
     </div>
   );
 }

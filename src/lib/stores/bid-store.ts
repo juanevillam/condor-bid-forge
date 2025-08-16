@@ -4,7 +4,7 @@ import type { Bid } from '../types';
 
 interface BidStore {
   bids: Bid[];
-  addBid: (bid: Omit<Bid, 'id' | 'createdAt' | 'deadlines'>) => void;
+  addBid: (bid: Omit<Bid, 'id' | 'createdAt' | 'deadlines'>) => string;
   updateBid: (id: string, updates: Partial<Bid>) => void;
   deleteBid: (id: string) => void;
   getBid: (id: string) => Bid | undefined;
@@ -16,9 +16,10 @@ export const useBidStore = create<BidStore>()(
       bids: [],
       
       addBid: (bidData) => {
+        const id = crypto.randomUUID();
         const newBid: Bid = {
           ...bidData,
-          id: crypto.randomUUID(),
+          id,
           createdAt: new Date().toISOString(),
           deadlines: []
         };
@@ -26,6 +27,8 @@ export const useBidStore = create<BidStore>()(
         set((state) => ({
           bids: [...state.bids, newBid]
         }));
+        
+        return id;
       },
       
       updateBid: (id, updates) => {

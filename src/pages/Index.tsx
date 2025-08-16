@@ -7,7 +7,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, FileText, MoreVertical, Folder, Edit3, Trash2, X } from "lucide-react";
+import { Plus, FileText, MoreVertical, Folder, Edit3, Trash2 } from "lucide-react";
 import { Header } from "@/components/layout/header";
 import { useBidStore } from "@/lib/stores/bid-store";
 import type { Bid } from "@/lib/types";
@@ -21,7 +21,7 @@ const Index = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedBid, setSelectedBid] = useState<Bid | null>(null);
   const [editTitle, setEditTitle] = useState('');
-  const { bids, deleteBid, updateBid } = useBidStore();
+  const { bids, deleteBid, updateBid, addBid } = useBidStore();
 
   // Load sort preference from localStorage on mount
   useEffect(() => {
@@ -129,6 +129,19 @@ const Index = () => {
     }
   };
 
+  const handleCreateNewBid = () => {
+    // Create a new bid immediately and navigate to the editor with setup flag
+    const newBid = addBid({
+      title: "",
+      client: "",
+      submissionDeadline: "",
+      stage: "discovery"
+    });
+    
+    // Navigate to the editor with setup query parameter
+    navigate(`/bids/${newBid}/edit?setup=1`);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -161,7 +174,7 @@ const Index = () => {
             <p className="text-muted-foreground mb-6 max-w-sm">
               Get started by creating your first bid workspace to organize your proposal documents and deadlines.
             </p>
-            <Button onClick={() => navigate('/bids/new')}>
+            <Button onClick={handleCreateNewBid}>
               <Plus className="w-4 h-4 mr-2" />
               Create your first bid
             </Button>
@@ -171,7 +184,7 @@ const Index = () => {
             {/* Create New Bid Card */}
             <Card 
               className="h-48 border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 transition-colors cursor-pointer group"
-              onClick={() => navigate('/bids/new')}
+              onClick={handleCreateNewBid}
             >
               <CardContent className="flex flex-col items-center justify-center h-full p-6">
                 <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-3 group-hover:bg-primary/20 transition-colors">
