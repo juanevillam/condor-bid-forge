@@ -29,7 +29,7 @@ export default function BidEditor() {
   // Redirect if bid not found
   useEffect(() => {
     if (!bid) {
-      navigate('/');
+      navigate('/app');
     }
   }, [bid, navigate]);
   
@@ -74,7 +74,7 @@ export default function BidEditor() {
     // If the bid is empty/new, delete it and go back to home
     if (bid && (!bid.title || !bid.client)) {
       deleteBid(bid.id);
-      navigate('/');
+      navigate('/app');
     } else {
       setSetupDialogOpen(false);
       // Remove the setup parameter from URL
@@ -133,7 +133,7 @@ export default function BidEditor() {
               <Button 
                 variant="ghost" 
                 size="sm" 
-                onClick={() => navigate('/')}
+                onClick={() => navigate('/app')}
                 className="p-2"
               >
                 <ArrowLeft className="w-4 h-4" />
