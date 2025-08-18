@@ -13,7 +13,7 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
         {/* Header */}
         <div className="text-center space-y-2">
           <h1 className="text-2xl font-semibold">Condor AI</h1>
-          <p className="text-sm text-muted-foreground">Bid Editor</p>
+          <p className="text-sm text-muted-foreground">Bid Proponent</p>
         </div>
 
         {/* Auth Card */}

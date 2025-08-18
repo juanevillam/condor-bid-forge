@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { AuthLayout } from "@/components/layout/auth-layout";
-import { Chrome, Grid3x3 } from "lucide-react";
+import { GoogleLogo, MicrosoftLogo } from "@/components/ui/brand-logos";
 
 export default function Register() {
   const navigate = useNavigate();
@@ -157,17 +157,17 @@ export default function Register() {
           <Button
             variant="outline"
             onClick={handleSocialLogin}
-            className="w-full"
+            className="w-full hover:bg-accent/50"
           >
-            <Chrome className="mr-2 h-4 w-4" />
+            <GoogleLogo className="mr-2" size={16} />
             Google
           </Button>
           <Button
             variant="outline"
             onClick={handleSocialLogin}
-            className="w-full"
+            className="w-full hover:bg-accent/50"
           >
-            <Grid3x3 className="mr-2 h-4 w-4" />
+            <MicrosoftLogo className="mr-2" size={16} />
             Microsoft
           </Button>
         </div>

@@ -22,7 +22,7 @@ export function Header() {
             onClick={() => navigate("/app")}
           >
             <h1 className="text-lg font-semibold">Condor AI</h1>
-            <p className="text-xs text-muted-foreground">Bid Editor</p>
+            <p className="text-xs text-muted-foreground">Bid Proponent</p>
           </div>
         </div>
 
@@ -50,7 +50,7 @@ export function Header() {
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleSignOut}>
                 <LogOut className="mr-2 h-4 w-4" />
-                <span>Sign out (demo)</span>
+                <span>Sign out</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
