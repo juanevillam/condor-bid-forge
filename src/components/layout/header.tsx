@@ -3,6 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Settings, User, LogOut, Wifi } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { GoogleLogo } from "@/components/ui/brand-logos";
 
 export function Header() {
   const navigate = useNavigate();
@@ -18,11 +19,11 @@ export function Header() {
         {/* Logo/Brand */}
         <div className="flex items-center gap-3">
           <div 
-            className="cursor-pointer hover:opacity-80 transition-opacity"
+            className="cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-3"
             onClick={() => navigate("/app")}
           >
-            <h1 className="text-lg font-semibold">Condor AI</h1>
-            <p className="text-xs text-muted-foreground">Bid Proponent</p>
+            <GoogleLogo size={28} />
+            <h1 className="text-lg font-semibold">KeenBID</h1>
           </div>
         </div>
 

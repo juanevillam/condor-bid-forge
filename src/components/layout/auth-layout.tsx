@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { GoogleLogo } from "@/components/ui/brand-logos";
 
 interface AuthLayoutProps {
   children: React.ReactNode;
@@ -11,9 +12,9 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
     <div className="min-h-screen bg-background flex items-center justify-center p-6">
       <div className="w-full max-w-md space-y-6">
         {/* Header */}
-        <div className="text-center space-y-2">
-          <h1 className="text-2xl font-semibold">Condor AI</h1>
-          <p className="text-sm text-muted-foreground">Bid Proponent</p>
+        <div className="text-center space-y-2 flex flex-col items-center">
+          <GoogleLogo size={32} className="mb-1" />
+          <h1 className="text-2xl font-semibold">KeenBID</h1>
         </div>
 
         {/* Auth Card */}
