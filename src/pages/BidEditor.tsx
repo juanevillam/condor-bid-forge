@@ -126,6 +126,9 @@ export default function BidEditor() {
     <div className="min-h-screen bg-background flex flex-col">
       <Header />
       
+      {/* Milestone Timeline */}
+      <MilestoneTimeline milestones={bid.milestones || []} />
+      
       {/* Sticky Header with Bid Info */}
       <div className="sticky top-16 z-40 bg-card/80 backdrop-blur-sm border-b border-border">
         <div className="px-6 py-3">
@@ -194,9 +197,6 @@ export default function BidEditor() {
           </div>
         </div>
       </div>
-
-      {/* Milestone Timeline */}
-      <MilestoneTimeline milestones={bid.milestones || []} />
 
       {/* Main Content */}
       <div className="flex-1 flex min-h-0">
