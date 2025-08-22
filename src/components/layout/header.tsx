@@ -3,7 +3,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Settings, User, LogOut, Wifi } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { GoogleLogo } from "@/components/ui/brand-logos";
 
 export function Header() {
   const navigate = useNavigate();
@@ -22,8 +21,12 @@ export function Header() {
             className="cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-3"
             onClick={() => navigate("/app")}
           >
-            <GoogleLogo size={28} />
-            <h1 className="text-lg font-semibold">KeenBID</h1>
+            <img 
+              src="/lovable-uploads/2560876c-b52a-4e80-8f79-8a8a7d6ed638.png" 
+              alt="Condor AI" 
+              className="w-28 h-auto sm:w-32 md:w-36" 
+            />
+            <h1 className="text-lg font-semibold hidden sm:block">KeenBID</h1>
           </div>
         </div>
 
