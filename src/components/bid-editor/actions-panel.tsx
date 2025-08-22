@@ -91,7 +91,7 @@ export function ActionsPanel({ onAddMessage }: ActionsPanelProps) {
 
   return (
     <div className="h-full flex flex-col">
-      <CardContent className="flex-1">
+      <CardContent className="flex-1 px-4">
         <ScrollArea className="h-full">
           <div className="space-y-3">
             {actionCards.map((card) => {
