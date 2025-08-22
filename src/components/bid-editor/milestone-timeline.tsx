@@ -25,38 +25,53 @@ export function MilestoneTimeline({ milestones }: MilestoneTimelineProps) {
     return dateA.getTime() - dateB.getTime();
   });
 
-  const getStatusColor = (status: Milestone['status']) => {
-    switch (status) {
-      case 'completed':
-        return 'bg-green-500/15 text-green-700';
-      case 'in_progress':
-        return 'bg-blue-500/15 text-blue-700';
-      case 'delayed':
-        return 'bg-red-500/15 text-red-700';
-      case 'canceled':
-        return 'bg-gray-500/15 text-gray-500 line-through';
-      case 'extended':
-        return 'bg-amber-500/15 text-amber-700';
-      default:
-        return 'bg-gray-500/15 text-gray-600';
+  // Centralized status tokens for consistent styling
+  const STATUS_TOKENS = {
+    completed: {
+      text: 'text-green-700',
+      bg: 'bg-green-500/10',
+      extBg: 'bg-green-50',
+      extText: 'text-green-800',
+      icon: CheckCircle
+    },
+    in_progress: {
+      text: 'text-teal-700',
+      bg: 'bg-teal-500/10',
+      extBg: 'bg-teal-50',
+      extText: 'text-teal-800',
+      icon: Clock
+    },
+    delayed: {
+      text: 'text-red-700',
+      bg: 'bg-red-500/10',
+      extBg: 'bg-red-50',
+      extText: 'text-red-800',
+      icon: AlertTriangle
+    },
+    canceled: {
+      text: 'text-gray-500',
+      bg: 'bg-gray-500/10',
+      extBg: 'bg-gray-50',
+      extText: 'text-gray-600',
+      icon: XCircle
+    },
+    extended: {
+      text: 'text-amber-700',
+      bg: 'bg-amber-500/10',
+      extBg: 'bg-amber-50',
+      extText: 'text-amber-800',
+      icon: ArrowUpRight
     }
   };
 
-  const getStatusIcon = (status: Milestone['status']) => {
-    switch (status) {
-      case 'completed':
-        return <CheckCircle className="w-3 h-3" />;
-      case 'in_progress':
-        return <Clock className="w-3 h-3" />;
-      case 'delayed':
-        return <AlertTriangle className="w-3 h-3" />;
-      case 'canceled':
-        return <XCircle className="w-3 h-3" />;
-      case 'extended':
-        return <ArrowUpRight className="w-3 h-3" />;
-      default:
-        return <Calendar className="w-3 h-3" />;
-    }
+  const getStatusStyles = (status: Milestone['status']) => {
+    const token = STATUS_TOKENS[status] || STATUS_TOKENS.canceled;
+    return {
+      className: `${token.bg} ${token.text} ${status === 'canceled' ? 'line-through' : ''}`,
+      extClassName: `${token.extBg} ${token.extText}`,
+      text: token.text,
+      icon: token.icon
+    };
   };
 
   const isDueSoon = (milestone: Milestone) => {
@@ -93,8 +108,8 @@ export function MilestoneTimeline({ milestones }: MilestoneTimelineProps) {
 
   if (milestones.length === 0) {
     return (
-      <Card className="m-4 py-3">
-        <div className="text-center text-muted-foreground">
+      <Card className="m-4 px-0">
+        <div className="px-3 py-3 text-center text-muted-foreground">
           <Calendar className="w-8 h-8 mx-auto mb-2 opacity-50" />
           <p>No timeline configured yet.</p>
         </div>
@@ -103,95 +118,94 @@ export function MilestoneTimeline({ milestones }: MilestoneTimelineProps) {
   }
 
   return (
-    <Card className="m-4 py-3">
-      <ScrollArea className="w-full">
-        <div className="flex" style={{ minWidth: 'max-content' }}>
-          {sortedMilestones.map((milestone, index) => (
-            <div key={milestone.id} className="flex items-center">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <HoverCard>
-                      <HoverCardTrigger asChild>
-                        <div className="relative flex flex-col items-center gap-2 min-w-[140px] cursor-pointer">
-                          <Badge
-                            variant="outline"
-                            className={`${getStatusColor(milestone.status)} px-3 py-1 flex items-center gap-2 text-xs font-medium whitespace-nowrap`}
-                          >
-                            {getStatusIcon(milestone.status)}
-                            <span className={milestone.status === 'canceled' ? 'line-through' : ''}>
-                              {milestone.label}
-                            </span>
-                            {milestone.isExtension && (
-                              <span className={`text-xs px-1 py-0.5 rounded ${
-                                milestone.status === 'completed' ? 'bg-green-100 text-green-700' :
-                                milestone.status === 'in_progress' ? 'bg-blue-100 text-blue-700' :
-                                milestone.status === 'delayed' ? 'bg-red-100 text-red-700' :
-                                milestone.status === 'extended' ? 'bg-amber-100 text-amber-700' :
-                                'bg-gray-100 text-gray-700'
-                              }`}>
-                                Ext.
+    <Card className="m-4 px-0">
+      <ScrollArea className="w-full px-3 py-3">
+        <div className="flex px-3 pb-3" style={{ minWidth: 'max-content' }}>
+          {sortedMilestones.map((milestone, index) => {
+            const statusStyles = getStatusStyles(milestone.status);
+            const StatusIcon = statusStyles.icon;
+            
+            return (
+              <div key={milestone.id} className="flex items-center">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <HoverCard>
+                        <HoverCardTrigger asChild>
+                          <div className="relative flex flex-col items-center gap-2 min-w-[140px] cursor-pointer">
+                            <Badge
+                              variant="outline"
+                              className={`${statusStyles.className} px-3 py-1 flex items-center gap-2 text-xs font-medium whitespace-nowrap`}
+                            >
+                              <StatusIcon className="w-3 h-3" />
+                              <span className={milestone.status === 'canceled' ? 'line-through' : ''}>
+                                {milestone.label}
                               </span>
-                            )}
-                            {(isDueSoon(milestone) || isOverdue(milestone)) && (
-                              <div className="relative">
-                                <Bell className="w-3 h-3 bg-gray-700 text-white rounded-sm p-0.5" />
-                                <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></div>
-                              </div>
-                            )}
-                          </Badge>
-                          <div className="text-xs text-muted-foreground text-center">
-                            {formatDate(milestone.date)}
+                              {milestone.isExtension && (
+                                <span className={`text-xs px-1 py-0.5 rounded-sm ${statusStyles.extClassName}`}>
+                                  Ext.
+                                </span>
+                              )}
+                              {(isDueSoon(milestone) || isOverdue(milestone)) && (
+                                <div className="relative">
+                                  <Bell className="w-3 h-3 bg-gray-700 text-white rounded-sm p-0.5" />
+                                  <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></div>
+                                </div>
+                              )}
+                            </Badge>
+                            <div className="text-xs text-muted-foreground text-center">
+                              {formatDate(milestone.date)}
+                            </div>
                           </div>
-                        </div>
-                      </HoverCardTrigger>
-                      <HoverCardContent className="w-80 p-4">
-                        <div className="space-y-3">
-                          <div className="flex items-center gap-2">
-                            {getStatusIcon(milestone.status)}
-                            <h4 className="font-semibold">{milestone.label}</h4>
+                        </HoverCardTrigger>
+                        <HoverCardContent className="w-80 p-4">
+                          <div className="space-y-3">
+                            <div className="flex items-center gap-2">
+                              <StatusIcon className={`w-4 h-4 ${statusStyles.text}`} />
+                              <h4 className="font-semibold">{milestone.label}</h4>
+                            </div>
+                            <div className="space-y-2 text-sm">
+                              <p><span className="font-medium">Date:</span> {formatDate(milestone.date)}</p>
+                              <p><span className="font-medium">Status:</span> {milestone.status.replace('_', ' ')}</p>
+                              <p><span className="font-medium">Responsible:</span> {milestone.responsible}</p>
+                              {milestone.deliverables.length > 0 && (
+                                <div>
+                                  <p className="font-medium">Deliverables:</p>
+                                  <ul className="list-disc list-inside ml-2 space-y-1">
+                                    {milestone.deliverables.map((deliverable, idx) => (
+                                      <li key={idx} className="text-muted-foreground">{deliverable}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                              {milestone.notes && (
+                                <p><span className="font-medium">Notes:</span> {milestone.notes}</p>
+                              )}
+                            </div>
                           </div>
-                          <div className="space-y-2 text-sm">
-                            <p><span className="font-medium">Date:</span> {formatDate(milestone.date)}</p>
-                            <p><span className="font-medium">Status:</span> {milestone.status.replace('_', ' ')}</p>
-                            <p><span className="font-medium">Responsible:</span> {milestone.responsible}</p>
-                            {milestone.deliverables.length > 0 && (
-                              <div>
-                                <p className="font-medium">Deliverables:</p>
-                                <ul className="list-disc list-inside ml-2 space-y-1">
-                                  {milestone.deliverables.map((deliverable, idx) => (
-                                    <li key={idx} className="text-muted-foreground">{deliverable}</li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
-                            {milestone.notes && (
-                              <p><span className="font-medium">Notes:</span> {milestone.notes}</p>
-                            )}
-                          </div>
-                        </div>
-                      </HoverCardContent>
-                    </HoverCard>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {isDueSoon(milestone) && (
-                      <p>Due in {getDaysUntilDue(milestone)} days</p>
-                    )}
-                    {isOverdue(milestone) && (
-                      <p>Overdue by {Math.abs(getDaysUntilDue(milestone))} days</p>
-                    )}
-                    {!isDueSoon(milestone) && !isOverdue(milestone) && (
-                      <p>Click for details</p>
-                    )}
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              
-              {index < sortedMilestones.length - 1 && (
-                <Separator orientation="horizontal" className="w-8 mx-2" />
-              )}
-            </div>
-          ))}
+                        </HoverCardContent>
+                      </HoverCard>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {isDueSoon(milestone) && (
+                        <p>Due in {getDaysUntilDue(milestone)} days</p>
+                      )}
+                      {isOverdue(milestone) && (
+                        <p>Overdue by {Math.abs(getDaysUntilDue(milestone))} days</p>
+                      )}
+                      {!isDueSoon(milestone) && !isOverdue(milestone) && (
+                        <p>Click for details</p>
+                      )}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                
+                {index < sortedMilestones.length - 1 && (
+                  <Separator orientation="horizontal" className="w-8 mx-2 border-gray-200" />
+                )}
+              </div>
+            );
+          })}
         </div>
       </ScrollArea>
     </Card>
