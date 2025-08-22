@@ -73,6 +73,12 @@ export function SourcesPanel({ onSourcesUpdate }: SourcesPanelProps) {
 
   return (
     <div className="h-full flex flex-col">
+      <CardHeader className="pb-4">
+        <CardTitle className="text-lg flex items-center gap-2">
+          <Upload className="w-5 h-5" />
+          Sources
+        </CardTitle>
+      </CardHeader>
 
       <CardContent className="flex-1 flex flex-col gap-4">
         {/* Upload Zone */}
