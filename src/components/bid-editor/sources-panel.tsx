@@ -203,7 +203,7 @@ export function SourcesPanel() {
 
   return (
     <div className="h-full flex flex-col">
-      <CardContent className="flex-1 flex flex-col gap-4 px-4">
+      <CardContent className="flex-1 flex flex-col gap-4 p-4">
         {/* Upload Zone */}
         <div className={`border-2 border-dashed border-border rounded-lg ${hasAnySources ? 'p-3' : 'p-6'} text-center hover:border-primary/50 transition-colors`}>
           <input
@@ -269,7 +269,7 @@ export function SourcesPanel() {
 
         {/* Content Sections */}
         {hasAnySources && filteredSources.length > 0 && (
-          <div className="flex-1 space-y-4">
+          <div className="flex-1 space-y-4 w-full">
             {/* Original Documents */}
             <Collapsible open={originalDocsOpen} onOpenChange={setOriginalDocsOpen}>
               <div className="flex items-center justify-between p-2 hover:bg-accent/50 rounded-md">

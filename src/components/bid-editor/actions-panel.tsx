@@ -174,7 +174,7 @@ export function ActionsPanel({ bidId }: ActionsPanelProps) {
 
   return (
     <div className="h-full flex flex-col">
-      <CardContent className="flex-1 px-4">
+      <CardContent className="flex-1 flex flex-col gap-4 p-4">
         <ScrollArea className="h-full">
           <div className="space-y-6">
             {/* Action Tiles */}

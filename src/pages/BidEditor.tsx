@@ -181,7 +181,7 @@ export default function BidEditor() {
     const setOpen = isLeft ? setLeftPanelOpen : setRightPanelOpen;
     
     return (
-      <CardHeader className="py-2 pl-4 pr-2 border-b mb-4">
+      <CardHeader className="py-2 pl-4 pr-2 border-b">
         <CardTitle className="text-lg flex items-center justify-between">
           {title}
           <Button
