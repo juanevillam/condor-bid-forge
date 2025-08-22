@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Progress } from "@/components/ui/progress";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -73,13 +73,6 @@ export function SourcesPanel({ onSourcesUpdate }: SourcesPanelProps) {
 
   return (
     <div className="h-full flex flex-col">
-      <CardHeader className="pb-4">
-        <CardTitle className="text-lg flex items-center gap-2">
-          <Upload className="w-5 h-5" />
-          Sources
-        </CardTitle>
-      </CardHeader>
-
       <CardContent className="flex-1 flex flex-col gap-4">
         {/* Upload Zone */}
         <div className="border-2 border-dashed border-border rounded-lg p-4 text-center hover:border-primary/50 transition-colors">
