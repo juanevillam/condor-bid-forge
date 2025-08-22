@@ -1,4 +1,4 @@
-import { Bid, Source, ChatMessage, ActionResult, Citation } from './types';
+import type { Bid, Source, ChatMessage, Citation, ActionResult, Milestone } from './types';
 
 export const mockBid: Bid = {
   id: '1',
@@ -22,6 +22,38 @@ export const mockBid: Bid = {
       source: 'RFP.pdf',
       page: 12
     }
+  ],
+  milestones: [
+    {
+      id: 'm1',
+      label: 'Publication',
+      date: '2024-08-01T09:00:00Z',
+      status: 'completed',
+      isExtension: false,
+      responsible: 'Procurement Office',
+      deliverables: ['Tender notice', 'RFP documents'],
+      notes: 'Published on time'
+    },
+    {
+      id: 'm2',
+      label: 'Document Acquisition',
+      date: '2024-08-15T17:00:00Z',
+      status: 'completed',
+      isExtension: false,
+      responsible: 'Bidders',
+      deliverables: ['Purchase tender documents'],
+      notes: 'Documents available online'
+    },
+    {
+      id: 'm3',
+      label: 'Mandatory Visit',
+      date: '2024-09-10T10:00:00Z',
+      status: 'in_progress',
+      isExtension: false,
+      responsible: 'Client Site Team',
+      deliverables: ['Site inspection', 'Q&A session'],
+      notes: 'Registration required by Sep 8'
+    }
   ]
 };
 
@@ -33,7 +65,8 @@ export const mockBids: Bid[] = [
     submissionDeadline: '2024-10-15',
     stage: 'discovery',
     createdAt: '2024-08-16',
-    deadlines: []
+    deadlines: [],
+    milestones: []
   },
   {
     id: '2',
@@ -42,7 +75,8 @@ export const mockBids: Bid[] = [
     submissionDeadline: '2024-09-30',
     stage: 'proposal',
     createdAt: '2024-08-14',
-    deadlines: []
+    deadlines: [],
+    milestones: []
   },
   {
     id: '3',
@@ -51,7 +85,8 @@ export const mockBids: Bid[] = [
     submissionDeadline: '2024-11-20',
     stage: 'discovery',
     createdAt: '2024-08-12',
-    deadlines: []
+    deadlines: [],
+    milestones: []
   }
 ];
 

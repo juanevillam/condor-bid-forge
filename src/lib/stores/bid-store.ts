@@ -4,7 +4,7 @@ import type { Bid } from '../types';
 
 interface BidStore {
   bids: Bid[];
-  addBid: (bid: Omit<Bid, 'id' | 'createdAt' | 'deadlines'>) => string;
+  addBid: (bid: Omit<Bid, 'id' | 'createdAt' | 'deadlines' | 'milestones'>) => string;
   updateBid: (id: string, updates: Partial<Bid>) => void;
   deleteBid: (id: string) => void;
   getBid: (id: string) => Bid | undefined;
@@ -21,7 +21,8 @@ export const useBidStore = create<BidStore>()(
           ...bidData,
           id,
           createdAt: new Date().toISOString(),
-          deadlines: []
+          deadlines: [],
+          milestones: []
         };
         
         set((state) => ({

@@ -6,6 +6,7 @@ export interface Bid {
   stage: 'discovery' | 'proposal' | 'review' | 'submitted';
   createdAt: string;
   deadlines: Deadline[];
+  milestones: Milestone[];
 }
 
 export interface Deadline {
@@ -45,4 +46,15 @@ export interface ActionResult {
   title: string;
   content: string;
   citations: Citation[];
+}
+
+export interface Milestone {
+  id: string;
+  label: string;
+  date: string; // ISO date
+  status: 'completed' | 'in_progress' | 'delayed' | 'canceled' | 'extended';
+  isExtension: boolean;
+  responsible: string;
+  deliverables: string[];
+  notes?: string;
 }

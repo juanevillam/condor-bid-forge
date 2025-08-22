@@ -12,6 +12,7 @@ import { SourcesPanel } from "@/components/bid-editor/sources-panel";
 import { ChatPanel } from "@/components/bid-editor/chat-panel";
 import { ActionsPanel } from "@/components/bid-editor/actions-panel";
 import { BidSetupDialog } from "@/components/bid-editor/bid-setup-dialog";
+import { MilestoneTimeline } from "@/components/bid-editor/milestone-timeline";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useBidStore } from "@/lib/stores/bid-store";
 import { Bid, ChatMessage } from "@/lib/types";
@@ -193,6 +194,9 @@ export default function BidEditor() {
           </div>
         </div>
       </div>
+
+      {/* Milestone Timeline */}
+      <MilestoneTimeline milestones={bid.milestones || []} />
 
       {/* Main Content */}
       <div className="flex-1 flex min-h-0">
