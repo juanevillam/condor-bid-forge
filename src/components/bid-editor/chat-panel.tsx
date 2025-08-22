@@ -153,9 +153,6 @@ export function ChatPanel({ messages = mockMessages, onSendMessage, onAddMessage
             <Send className="w-4 h-4" />
           </Button>
         </div>
-        <p className="text-xs text-muted-foreground mt-2">
-          Press Enter to send, Shift+Enter for new line
-        </p>
       </div>
     </div>
   );
