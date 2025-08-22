@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, FileText, CheckSquare, Send, Clock, Grid3X3, FileCheck, Mail, Copy } from "lucide-react";
+import { Calendar, FileText, CheckSquare, Send, Clock, Grid3X3, Mail, Copy } from "lucide-react";
 import { ActionResult, ChatMessage } from "@/lib/types";
 import { extractDeadlines, generateComplianceMatrix, createChecklists, draftLetter } from "@/lib/mock-data";
 
@@ -91,13 +91,6 @@ export function ActionsPanel({ onAddMessage }: ActionsPanelProps) {
 
   return (
     <div className="h-full flex flex-col">
-      <CardHeader className="pb-4">
-        <CardTitle className="text-lg flex items-center gap-2">
-          <FileCheck className="w-5 h-5" />
-          Actions
-        </CardTitle>
-      </CardHeader>
-
       <CardContent className="flex-1">
         <ScrollArea className="h-full">
           <div className="space-y-3">
