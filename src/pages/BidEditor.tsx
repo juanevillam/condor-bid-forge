@@ -5,6 +5,7 @@ import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   PanelLeftOpen,
   PanelRightOpen,
@@ -274,7 +275,7 @@ export default function BidEditor() {
       <MilestoneTimeline milestones={bid.milestones || []} />
 
       {/* Main Content */}
-      <div className="flex-1 flex min-h-0 mx-4 space-x-4 mb-4">
+      <div className="flex-1 flex min-h-0 mx-4 space-x-4 mb-4 max-h-[calc(100vh-12rem)]">
         {/* Desktop Layout */}
         {!isMobile && (
           <>
@@ -282,12 +283,14 @@ export default function BidEditor() {
             <Card
               className={`transition-all duration-300 ${
                 leftPanelOpen ? PANEL_WIDTHS.expanded : PANEL_WIDTHS.collapsed
-              } border-r bg-card`}
+              } border-r bg-card max-h-full flex flex-col`}
             >
               {leftPanelOpen ? (
-                <div>
+                <div className="flex flex-col h-full">
                   {renderPanelHeader("Sources", true)}
-                  <SourcesPanel />
+                  <ScrollArea className="flex-1 px-0">
+                    <SourcesPanel />
+                  </ScrollArea>
                 </div>
               ) : (
                 renderCollapsedPanel(true)
@@ -295,20 +298,24 @@ export default function BidEditor() {
             </Card>
 
             {/* Center Panel - Chat */}
-            <Card className="flex-1 min-w-0">
-              <ChatPanel messages={messages} onAddMessage={handleAddMessage} />
+            <Card className="flex-1 min-w-0 max-h-full flex flex-col">
+              <ScrollArea className="flex-1">
+                <ChatPanel messages={messages} onAddMessage={handleAddMessage} />
+              </ScrollArea>
             </Card>
 
             {/* Right Panel - Actions */}
             <Card
               className={`transition-all duration-300 ${
                 rightPanelOpen ? PANEL_WIDTHS.expanded : PANEL_WIDTHS.collapsed
-              } border-l bg-card`}
+              } border-l bg-card max-h-full flex flex-col`}
             >
               {rightPanelOpen ? (
-                 <div>
+                 <div className="flex flex-col h-full">
                    {renderPanelHeader("Actions", false)}
-                   <ActionsPanel bidId={bid.id} />
+                   <ScrollArea className="flex-1 px-0">
+                     <ActionsPanel bidId={bid.id} />
+                   </ScrollArea>
                  </div>
               ) : (
                 renderCollapsedPanel(false)
