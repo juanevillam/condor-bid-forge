@@ -91,12 +91,6 @@ export function ActionsPanel({ onAddMessage }: ActionsPanelProps) {
 
   return (
     <div className="h-full flex flex-col">
-      <CardHeader className="pb-4">
-        <CardTitle className="text-lg flex items-center gap-2">
-          <FileCheck className="w-5 h-5" />
-          Actions
-        </CardTitle>
-      </CardHeader>
 
       <CardContent className="flex-1">
         <ScrollArea className="h-full">
