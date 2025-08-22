@@ -25,6 +25,21 @@ export interface Source {
   uploadedAt: string;
   status: 'uploading' | 'processing' | 'ready' | 'error';
   progress?: number;
+  labels?: ClassificationLabel[];
+  paragraphs?: ClassifiedParagraph[];
+}
+
+export interface ClassificationLabel {
+  id: string;
+  name: 'Legal' | 'Finance' | 'Technical' | 'Commercial' | 'Admin';
+  confidence: number;
+}
+
+export interface ClassifiedParagraph {
+  id: string;
+  text: string;
+  labels: ClassificationLabel[];
+  page?: number;
 }
 
 export interface ChatMessage {
