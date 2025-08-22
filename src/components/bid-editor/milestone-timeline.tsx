@@ -156,7 +156,7 @@ export function MilestoneTimeline({ milestones }: MilestoneTimelineProps) {
   return (
     <Card className="m-4 px-0">
       <ScrollArea className="py-3 w-full">
-        <div className="flex px-3 pb-3" style={{ minWidth: "max-content" }}>
+        <div className="flex px-3 pb-1">
           {sortedMilestones.map((milestone, index) => (
             <div key={milestone.id} className="flex items-center">
               <TooltipProvider>
