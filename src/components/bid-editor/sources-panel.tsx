@@ -30,11 +30,11 @@ import { Source } from "@/lib/types";
 type CheckboxState = boolean | 'indeterminate';
 
 const LABEL_COLORS = {
-  Legal: "bg-violet-100 text-violet-700 border-violet-200",
-  Finance: "bg-emerald-100 text-emerald-700 border-emerald-200", 
-  Technical: "bg-sky-100 text-sky-700 border-sky-200",
-  Commercial: "bg-amber-100 text-amber-700 border-amber-200",
-  Admin: "bg-slate-100 text-slate-700 border-slate-200"
+  Legal: "bg-indigo-500/15 text-indigo-500",
+  Finance: "bg-emerald-500/15 text-emerald-500",
+  Technical: "bg-sky-500/15 text-sky-500",
+  Commercial: "bg-amber-500/15 text-amber-500",
+  Admin: "bg-slate-500/15 text-slate-500",
 } as const;
 
 export function SourcesPanel() {
@@ -202,8 +202,9 @@ export function SourcesPanel() {
   const hasAnySources = sources.length > 0 || uploadingSources.length > 0;
 
   return (
-    <div className="h-full flex flex-col">
-      <CardContent className="flex-1 flex flex-col gap-4">
+    <div className="h-full flex flex-col max-h-screen">
+      <ScrollArea className="flex-1">
+        <CardContent className="flex-1 flex flex-col gap-4 px-4">
         {/* Upload Zone */}
         <div className={`border-2 border-dashed border-border rounded-lg ${hasAnySources ? 'p-3' : 'p-6'} text-center hover:border-primary/50 transition-colors`}>
           <input
@@ -371,7 +372,8 @@ export function SourcesPanel() {
             <p className="text-xs">Try a different search term</p>
           </div>
         )}
-      </CardContent>
+        </CardContent>
+      </ScrollArea>
     </div>
   );
 }
