@@ -11,13 +11,9 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
     <div className="min-h-screen bg-background flex items-center justify-center p-6">
       <div className="w-full max-w-md space-y-6">
         {/* Header */}
-        <div className="text-center space-y-3 flex flex-col items-center">
-          <img 
-            src="/lovable-uploads/2560876c-b52a-4e80-8f79-8a8a7d6ed638.png" 
-            alt="Condor AI" 
-            className="w-32 h-auto sm:w-36" 
-          />
-          <h1 className="text-2xl font-semibold">KeenBID</h1>
+        <div className="text-center space-y-2">
+          <h1 className="text-2xl font-semibold">Condor AI</h1>
+          <p className="text-sm text-muted-foreground">Bid Proponent</p>
         </div>
 
         {/* Auth Card */}

@@ -18,15 +18,11 @@ export function Header() {
         {/* Logo/Brand */}
         <div className="flex items-center gap-3">
           <div 
-            className="cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-3"
+            className="cursor-pointer hover:opacity-80 transition-opacity"
             onClick={() => navigate("/app")}
           >
-            <img 
-              src="/lovable-uploads/2560876c-b52a-4e80-8f79-8a8a7d6ed638.png" 
-              alt="Condor AI" 
-              className="w-28 h-auto sm:w-32 md:w-36" 
-            />
-            <h1 className="text-lg font-semibold hidden sm:block">KeenBID</h1>
+            <h1 className="text-lg font-semibold">Condor AI</h1>
+            <p className="text-xs text-muted-foreground">Bid Proponent</p>
           </div>
         </div>
 
