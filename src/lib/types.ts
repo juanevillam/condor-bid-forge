@@ -21,12 +21,10 @@ export interface Source {
   id: string;
   name: string;
   type: 'pdf' | 'docx' | 'xlsx' | 'txt';
-  size: number;
-  uploadedAt: string;
-  status: 'uploading' | 'processing' | 'ready' | 'error';
-  progress?: number;
-  labels?: ClassificationLabel[];
-  paragraphs?: ClassifiedParagraph[];
+  size: string;
+  path?: string;
+  labels?: string[];
+  createdAt: string;
 }
 
 export interface ClassificationLabel {

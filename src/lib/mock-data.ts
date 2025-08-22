@@ -95,53 +95,37 @@ export const mockSources: Source[] = [
     id: '1',
     name: 'RFP.pdf',
     type: 'pdf',
-    size: 2400000,
-    uploadedAt: '2024-08-16T10:00:00Z',
-    status: 'ready',
-    labels: [
-      { id: 'l1', name: 'Legal', confidence: 0.85 },
-      { id: 'l2', name: 'Commercial', confidence: 0.72 }
-    ],
-    paragraphs: [
-      {
-        id: 'p1',
-        text: 'All submissions must comply with federal procurement regulations...',
-        labels: [{ id: 'l1', name: 'Legal', confidence: 0.85 }],
-        page: 1
-      },
-      {
-        id: 'p2',
-        text: 'The total contract value is estimated at $2.5M over 3 years...',
-        labels: [{ id: 'l2', name: 'Commercial', confidence: 0.72 }],
-        page: 2
-      }
-    ]
+    size: '2.4 MB',
+    path: 'documents/RFP.pdf',
+    labels: ['Legal', 'Commercial'],
+    createdAt: '2024-08-16T10:00:00Z'
   },
   {
     id: '2',
     name: 'Technical_Requirements.docx',
     type: 'docx',
-    size: 1200000,
-    uploadedAt: '2024-08-16T10:15:00Z',
-    status: 'ready',
-    labels: [
-      { id: 'l3', name: 'Technical', confidence: 0.95 },
-      { id: 'l4', name: 'Finance', confidence: 0.68 }
-    ],
-    paragraphs: [
-      {
-        id: 'p3',
-        text: 'System must support 99.9% uptime with automatic failover...',
-        labels: [{ id: 'l3', name: 'Technical', confidence: 0.95 }],
-        page: 1
-      },
-      {
-        id: 'p4',
-        text: 'Budget allocation for hardware procurement is $500K...',
-        labels: [{ id: 'l4', name: 'Finance', confidence: 0.68 }],
-        page: 3
-      }
-    ]
+    size: '1.2 MB',
+    path: 'documents/Technical_Requirements.docx',
+    labels: ['Technical', 'Finance'],
+    createdAt: '2024-08-16T10:15:00Z'
+  },
+  {
+    id: '3',
+    name: 'Project_Specifications.xlsx',
+    type: 'xlsx',
+    size: '850 KB',
+    path: 'documents/specs/Project_Specifications.xlsx',
+    labels: ['Technical', 'Admin'],
+    createdAt: '2024-08-16T10:20:00Z'
+  },
+  {
+    id: '4',
+    name: 'Budget_Analysis.xlsx',
+    type: 'xlsx',
+    size: '1.1 MB',
+    path: 'documents/finance/Budget_Analysis.xlsx',
+    labels: ['Finance'],
+    createdAt: '2024-08-16T10:25:00Z'
   }
 ];
 
@@ -164,21 +148,9 @@ const mockClassifyFile = (fileName: string) => {
   const labels = ['Legal', 'Finance', 'Technical', 'Commercial', 'Admin'] as const;
   const selectedLabels = labels
     .filter(() => Math.random() > 0.6)
-    .slice(0, 2 + Math.floor(Math.random() * 2))
-    .map(name => ({
-      id: Math.random().toString(36).substr(2, 9),
-      name,
-      confidence: 0.6 + Math.random() * 0.4
-    }));
+    .slice(0, 2 + Math.floor(Math.random() * 2));
   
-  const paragraphs = Array.from({ length: 2 + Math.floor(Math.random() * 3) }, (_, i) => ({
-    id: Math.random().toString(36).substr(2, 9),
-    text: `Sample paragraph ${i + 1} from ${fileName}...`,
-    labels: selectedLabels.slice(0, 1 + Math.floor(Math.random() * selectedLabels.length)),
-    page: 1 + Math.floor(Math.random() * 5)
-  }));
-
-  return { labels: selectedLabels, paragraphs };
+  return { labels: selectedLabels };
 };
 
 // Mock API functions
@@ -186,14 +158,15 @@ export async function uploadSource(file: File): Promise<Source> {
   return new Promise((resolve) => {
     setTimeout(() => {
       const classification = mockClassifyFile(file.name);
+      const sizeInMB = (file.size / (1024 * 1024)).toFixed(1);
       resolve({
         id: Math.random().toString(36).substr(2, 9),
         name: file.name,
         type: file.name.split('.').pop() as 'pdf' | 'docx' | 'xlsx' | 'txt',
-        size: file.size,
-        uploadedAt: new Date().toISOString(),
-        status: 'ready',
-        ...classification
+        size: `${sizeInMB} MB`,
+        path: `documents/${file.name}`,
+        labels: classification.labels,
+        createdAt: new Date().toISOString()
       });
     }, 2000);
   });
