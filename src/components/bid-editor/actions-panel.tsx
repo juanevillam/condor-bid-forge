@@ -1,193 +1,447 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, FileText, CheckSquare, Send, Clock, Grid3X3, Mail, Copy } from "lucide-react";
-import { ActionResult, ChatMessage } from "@/lib/types";
-import { extractDeadlines, generateComplianceMatrix, createChecklists, draftLetter } from "@/lib/mock-data";
+import { Progress } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useToast } from "@/hooks/use-toast";
+import { 
+  FileText, 
+  ListChecks, 
+  FileCog, 
+  Banknote, 
+  Users, 
+  TrendingUp, 
+  Plus, 
+  MoreVertical,
+  Edit,
+  Trash2,
+  CheckCircle,
+  AlertCircle
+} from "lucide-react";
+import { useBidStore } from "@/lib/stores/bid-store";
+import type { ProposalStatus } from "@/lib/types";
 
 interface ActionsPanelProps {
-  onAddMessage?: (message: ChatMessage) => void;
+  bidId: string;
 }
 
-export function ActionsPanel({ onAddMessage }: ActionsPanelProps) {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [currentResult, setCurrentResult] = useState<ActionResult | null>(null);
-  const [loadingAction, setLoadingAction] = useState<string | null>(null);
+export function ActionsPanel({ bidId }: ActionsPanelProps) {
+  const { getBid, updateBidActions, initializeBidActions } = useBidStore();
+  const { toast } = useToast();
+  const [isNoteDialogOpen, setIsNoteDialogOpen] = useState(false);
+  const [editingNote, setEditingNote] = useState<string | null>(null);
+  const [noteTitle, setNoteTitle] = useState("");
+  const [noteBody, setNoteBody] = useState("");
 
-  const handleAction = async (actionType: string, actionFn: () => Promise<ActionResult>) => {
-    setLoadingAction(actionType);
+  const bid = getBid(bidId);
+
+  useEffect(() => {
+    if (bid) {
+      initializeBidActions(bidId);
+    }
+  }, [bidId, bid, initializeBidActions]);
+
+  const handleBriefingDoc = () => {
+    const today = new Date().toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric', 
+      year: 'numeric' 
+    });
     
-    try {
-      const result = await actionFn();
-      setCurrentResult(result);
-      setIsDialogOpen(true);
+    const briefingContent = `• Key requirements analysis complete
+• Technical feasibility confirmed
+• Budget estimates within range
+• Risk assessment in progress
+• Stakeholder alignment needed`;
 
-      // Add structured message to chat
-      const chatMessage: ChatMessage = {
-        id: Math.random().toString(36).substr(2, 9),
-        type: 'assistant',
-        content: `${result.title}\n\n${result.content}`,
-        timestamp: new Date().toISOString(),
-        citations: result.citations
+    const newNote = {
+      id: crypto.randomUUID(),
+      title: `Briefing doc – ${today}`,
+      body: briefingContent,
+      createdAt: new Date().toISOString()
+    };
+
+    const currentNotes = bid?.actions?.notes || [];
+    updateBidActions(bidId, {
+      notes: [newNote, ...currentNotes]
+    });
+
+    toast({
+      title: "Briefing doc created",
+      description: "Your briefing document has been generated and saved to notes."
+    });
+  };
+
+  const handleAddNote = () => {
+    setEditingNote(null);
+    setNoteTitle("");
+    setNoteBody("");
+    setIsNoteDialogOpen(true);
+  };
+
+  const handleEditNote = (noteId: string) => {
+    const note = bid?.actions?.notes.find(n => n.id === noteId);
+    if (note) {
+      setEditingNote(noteId);
+      setNoteTitle(note.title);
+      setNoteBody(note.body || "");
+      setIsNoteDialogOpen(true);
+    }
+  };
+
+  const handleDeleteNote = (noteId: string) => {
+    const currentNotes = bid?.actions?.notes || [];
+    updateBidActions(bidId, {
+      notes: currentNotes.filter(n => n.id !== noteId)
+    });
+  };
+
+  const handleSaveNote = () => {
+    if (!noteTitle.trim()) return;
+
+    const currentNotes = bid?.actions?.notes || [];
+    
+    if (editingNote) {
+      // Edit existing note
+      updateBidActions(bidId, {
+        notes: currentNotes.map(note => 
+          note.id === editingNote 
+            ? { ...note, title: noteTitle, body: noteBody, updatedAt: new Date().toISOString() }
+            : note
+        )
+      });
+    } else {
+      // Add new note
+      const newNote = {
+        id: crypto.randomUUID(),
+        title: noteTitle,
+        body: noteBody,
+        createdAt: new Date().toISOString()
       };
-      onAddMessage?.(chatMessage);
       
-    } catch (error) {
-      console.error('Action failed:', error);
-    } finally {
-      setLoadingAction(null);
+      updateBidActions(bidId, {
+        notes: [newNote, ...currentNotes]
+      });
+    }
+
+    setIsNoteDialogOpen(false);
+    setNoteTitle("");
+    setNoteBody("");
+    setEditingNote(null);
+  };
+
+  const getStatusColor = (status: ProposalStatus) => {
+    switch (status) {
+      case 'not_started': return 'bg-slate-500/15 text-slate-500';
+      case 'draft': return 'bg-amber-500/15 text-amber-500';
+      case 'in_review': return 'bg-sky-500/15 text-sky-500';
+      case 'final': return 'bg-emerald-500/15 text-emerald-500';
+      default: return 'bg-slate-500/15 text-slate-500';
     }
   };
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
+  const getStatusLabel = (status: ProposalStatus) => {
+    switch (status) {
+      case 'not_started': return 'Not started';
+      case 'draft': return 'Draft';
+      case 'in_review': return 'In review';
+      case 'final': return 'Final';
+      default: return 'Not started';
+    }
   };
 
-  const actionCards = [
-    {
-      id: 'deadlines',
-      title: 'Extract Deadlines',
-      description: 'Find and organize all submission deadlines',
-      icon: Calendar,
-      color: 'text-blue-500',
-      action: () => handleAction('deadlines', extractDeadlines)
-    },
-    {
-      id: 'compliance',
-      title: 'Compliance Matrix',
-      description: 'Generate requirements compliance tracking',
-      icon: Grid3X3,
-      color: 'text-green-500',
-      action: () => handleAction('compliance', generateComplianceMatrix)
-    },
-    {
-      id: 'checklists',
-      title: 'Function Checklists',
-      description: 'Create team-specific task lists',
-      icon: CheckSquare,
-      color: 'text-purple-500',
-      action: () => handleAction('checklists', createChecklists)
-    },
-    {
-      id: 'participate',
-      title: 'Participation Letter',
-      description: 'Draft letter of intent to participate',
-      icon: Mail,
-      color: 'text-orange-500',
-      action: () => handleAction('participate', () => draftLetter('participation'))
-    },
-    {
-      id: 'decline',
-      title: 'Decline Letter',
-      description: 'Draft professional decline letter',
-      icon: FileText,
-      color: 'text-red-500',
-      action: () => handleAction('decline', () => draftLetter('decline'))
-    }
-  ];
+  const getInitials = (name: string) => {
+    return name.split(' ').map(n => n[0]).join('').toUpperCase();
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit'
+    });
+  };
+
+  if (!bid?.actions) return null;
 
   return (
     <div className="h-full flex flex-col">
       <CardContent className="flex-1 px-4">
         <ScrollArea className="h-full">
-          <div className="space-y-3">
-            {actionCards.map((card) => {
-              const Icon = card.icon;
-              const isLoading = loadingAction === card.id;
-              
-              return (
-                <Card 
-                  key={card.id} 
-                  className="p-4 hover:bg-accent/50 transition-colors cursor-pointer group"
-                  onClick={card.action}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0">
-                      <Icon className={`w-5 h-5 ${card.color} group-hover:scale-110 transition-transform`} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-sm mb-1">{card.title}</h3>
-                      <p className="text-xs text-muted-foreground leading-relaxed">
-                        {card.description}
-                      </p>
-                    </div>
+          <div className="space-y-6">
+            {/* Action Tiles */}
+            <div>
+              <Card 
+                className="p-4 hover:bg-accent/50 transition-colors cursor-pointer group rounded-2xl shadow-sm"
+                onClick={handleBriefingDoc}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex-shrink-0">
+                    <FileText className="w-5 h-5 text-emerald-500 group-hover:scale-110 transition-transform" />
                   </div>
-                  
-                  {isLoading && (
-                    <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
-                      <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                      Processing...
+                  <div className="flex-1">
+                    <h3 className="font-medium text-sm">Briefing doc</h3>
+                    <p className="text-xs text-muted-foreground">
+                      Generate comprehensive briefing document
+                    </p>
+                  </div>
+                </div>
+              </Card>
+            </div>
+
+            {/* Results */}
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <ListChecks className="w-4 h-4 text-muted-foreground" />
+                <h3 className="font-medium text-sm">Results</h3>
+              </div>
+              <div className="space-y-2">
+                {bid.actions.results.map((result, index) => (
+                  <div key={index} className="flex items-start gap-2 text-sm">
+                    <CheckCircle className="w-3 h-3 text-emerald-500 mt-0.5 flex-shrink-0" />
+                    <span className="text-muted-foreground">{result}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Proposal */}
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <FileCog className="w-4 h-4 text-muted-foreground" />
+                <h3 className="font-medium text-sm">Proposal</h3>
+              </div>
+              <div className="space-y-3">
+                {/* Technical Proposal */}
+                <Card className="p-3 rounded-xl">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start gap-3">
+                      <FileCog className="w-4 h-4 text-sky-500 mt-0.5" />
+                      <div className="flex-1">
+                        <h4 className="font-medium text-sm">Technical Proposal</h4>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge className={getStatusColor(bid.actions.proposal.technical.status)}>
+                            {getStatusLabel(bid.actions.proposal.technical.status)}
+                          </Badge>
+                          {bid.actions.proposal.technical.owner && (
+                            <span className="text-xs text-muted-foreground">
+                              {bid.actions.proposal.technical.owner}
+                            </span>
+                          )}
+                        </div>
+                        {bid.actions.proposal.technical.updatedAt && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Updated {formatDate(bid.actions.proposal.technical.updatedAt)}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                  )}
+                    <Button variant="ghost" size="sm" className="text-xs">
+                      Open draft
+                    </Button>
+                  </div>
                 </Card>
-              );
-            })}
+
+                {/* Economic Proposal */}
+                <Card className="p-3 rounded-xl">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start gap-3">
+                      <Banknote className="w-4 h-4 text-emerald-500 mt-0.5" />
+                      <div className="flex-1">
+                        <h4 className="font-medium text-sm">Economic Proposal</h4>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge className={getStatusColor(bid.actions.proposal.economic.status)}>
+                            {getStatusLabel(bid.actions.proposal.economic.status)}
+                          </Badge>
+                          {bid.actions.proposal.economic.owner && (
+                            <span className="text-xs text-muted-foreground">
+                              {bid.actions.proposal.economic.owner}
+                            </span>
+                          )}
+                        </div>
+                        {bid.actions.proposal.economic.updatedAt && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Updated {formatDate(bid.actions.proposal.economic.updatedAt)}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <Button variant="ghost" size="sm" className="text-xs">
+                      Open draft
+                    </Button>
+                  </div>
+                </Card>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Progress */}
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <TrendingUp className="w-4 h-4 text-muted-foreground" />
+                <h3 className="font-medium text-sm">Progress</h3>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Overall progress</span>
+                  <span className="font-medium">{bid.actions.progress.overall}%</span>
+                </div>
+                <Progress value={bid.actions.progress.overall} className="h-2" />
+              </div>
+            </div>
+
+            {/* Stakeholders */}
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <Users className="w-4 h-4 text-muted-foreground" />
+                <h3 className="font-medium text-sm">Stakeholders</h3>
+              </div>
+              <div className="space-y-2">
+                {bid.actions.stakeholders.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">Assign stakeholders</p>
+                ) : (
+                  bid.actions.stakeholders.map((stakeholder) => (
+                    <div key={stakeholder.id} className="flex items-center gap-3">
+                      <Avatar className="w-6 h-6">
+                        <AvatarFallback className="text-xs">
+                          {getInitials(stakeholder.name)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium">{stakeholder.name}</span>
+                          <Badge className={
+                            stakeholder.status === 'on_track' 
+                              ? 'bg-emerald-500/15 text-emerald-500' 
+                              : 'bg-amber-500/15 text-amber-500'
+                          }>
+                            {stakeholder.status === 'on_track' ? 'On track' : 'Needs input'}
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-muted-foreground">{stakeholder.role}</p>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Notes */}
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <FileText className="w-4 h-4 text-muted-foreground" />
+                <h3 className="font-medium text-sm">Notes</h3>
+              </div>
+              
+              <div className="space-y-3">
+                {bid.actions.notes.length === 0 ? (
+                  <p className="text-xs text-muted-foreground mb-3">No notes yet</p>
+                ) : (
+                  bid.actions.notes.map((note) => (
+                    <Card key={note.id} className="p-3 rounded-xl">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-medium text-sm truncate">{note.title}</h4>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {formatDate(note.createdAt)}
+                            {note.updatedAt && note.updatedAt !== note.createdAt && (
+                              <span> • Updated {formatDate(note.updatedAt)}</span>
+                            )}
+                          </p>
+                          {note.body && (
+                            <p className="text-xs text-muted-foreground mt-2 line-clamp-2">
+                              {note.body}
+                            </p>
+                          )}
+                        </div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" className="w-8 h-8 p-0">
+                              <MoreVertical className="w-3 h-3" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleEditNote(note.id)}>
+                              <Edit className="w-3 h-3 mr-2" />
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={() => handleDeleteNote(note.id)}
+                              className="text-destructive"
+                            >
+                              <Trash2 className="w-3 h-3 mr-2" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </Card>
+                  ))
+                )}
+
+                <Button 
+                  variant="outline" 
+                  onClick={handleAddNote}
+                  className="w-full rounded-full h-10"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add note
+                </Button>
+              </div>
+            </div>
           </div>
         </ScrollArea>
       </CardContent>
 
-      {/* Result Dialog */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[80vh]">
+      {/* Note Dialog */}
+      <Dialog open={isNoteDialogOpen} onOpenChange={setIsNoteDialogOpen}>
+        <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              {currentResult?.type === 'deadlines' && <Calendar className="w-5 h-5" />}
-              {currentResult?.type === 'compliance' && <Grid3X3 className="w-5 h-5" />}
-              {currentResult?.type === 'checklist' && <CheckSquare className="w-5 h-5" />}
-              {currentResult?.type === 'letter' && <Mail className="w-5 h-5" />}
-              {currentResult?.title}
-            </DialogTitle>
+            <DialogTitle>{editingNote ? 'Edit Note' : 'Add Note'}</DialogTitle>
             <DialogDescription>
-              Generated from your uploaded sources
+              {editingNote ? 'Update your note' : 'Create a new note for this bid'}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
-            {/* Content */}
-            <ScrollArea className="max-h-96">
-              <div className="p-4 bg-muted/30 rounded-lg">
-                <pre className="whitespace-pre-wrap text-sm font-mono">
-                  {currentResult?.content}
-                </pre>
-              </div>
-            </ScrollArea>
-
-            {/* Citations */}
-            {currentResult?.citations && currentResult.citations.length > 0 && (
-              <div>
-                <h4 className="font-medium text-sm mb-2">Sources:</h4>
-                <div className="flex flex-wrap gap-2">
-                  {currentResult.citations.map((citation, index) => (
-                    <Badge key={index} variant="outline" className="citation-chip">
-                      <FileText className="w-3 h-3 mr-1" />
-                      {citation.source} {citation.page && `p.${citation.page}`}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Actions */}
-            <div className="flex justify-end gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => copyToClipboard(currentResult?.content || '')}
-              >
-                <Copy className="w-4 h-4 mr-2" />
-                Copy
-              </Button>
-              <Button
-                size="sm"
-                onClick={() => setIsDialogOpen(false)}
-              >
-                Close
-              </Button>
+            <div>
+              <Input
+                placeholder="Note title"
+                value={noteTitle}
+                onChange={(e) => setNoteTitle(e.target.value)}
+              />
+            </div>
+            <div>
+              <Textarea
+                placeholder="Note content (optional)"
+                value={noteBody}
+                onChange={(e) => setNoteBody(e.target.value)}
+                rows={4}
+              />
             </div>
           </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsNoteDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveNote} disabled={!noteTitle.trim()}>
+              {editingNote ? 'Update' : 'Save'}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

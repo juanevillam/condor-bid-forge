@@ -257,12 +257,12 @@ export default function BidEditor() {
                     </Card>,
                     "Sources"
                   )}
-                  {renderSidePanel(
-                    <Card className="h-full rounded-none border-0">
-                      <ActionsPanel onAddMessage={handleAddMessage} />
-                    </Card>,
-                    "Actions"
-                  )}
+                   {renderSidePanel(
+                     <Card className="h-full rounded-none border-0">
+                       <ActionsPanel bidId={bid.id} />
+                     </Card>,
+                     "Actions"
+                   )}
                 </div>
               )}
             </div>
@@ -306,10 +306,10 @@ export default function BidEditor() {
               } border-l bg-card`}
             >
               {rightPanelOpen ? (
-                <div>
-                  {renderPanelHeader("Actions", false)}
-                  <ActionsPanel onAddMessage={handleAddMessage} />
-                </div>
+                 <div>
+                   {renderPanelHeader("Actions", false)}
+                   <ActionsPanel bidId={bid.id} />
+                 </div>
               ) : (
                 renderCollapsedPanel(false)
               )}

@@ -7,6 +7,7 @@ export interface Bid {
   createdAt: string;
   deadlines: Deadline[];
   milestones: Milestone[];
+  actions?: BidActionsData;
 }
 
 export interface Deadline {
@@ -70,4 +71,17 @@ export interface Milestone {
   responsible: string;
   deliverables: string[];
   notes?: string;
+}
+
+export type ProposalStatus = 'not_started' | 'draft' | 'in_review' | 'final';
+
+export interface BidActionsData {
+  results: string[]; // small bullet items (mock)
+  proposal: {
+    technical: { status: ProposalStatus; owner?: string; updatedAt?: string };
+    economic: { status: ProposalStatus; owner?: string; updatedAt?: string };
+  };
+  progress: { overall: number }; // 0–100
+  stakeholders: Array<{ id: string; role: string; name: string; status: 'on_track' | 'needs_input' }>;
+  notes: Array<{ id: string; title: string; body?: string; createdAt: string; updatedAt?: string }>;
 }
