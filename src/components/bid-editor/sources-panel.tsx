@@ -227,7 +227,7 @@ export function SourcesPanel() {
           onCheckedChange={(checked) => handleFileSelect(source.id, checked as boolean)}
         />
         
-        <div className="flex items-start gap-2 flex-1 min-w-0">
+        <div className="flex items-start gap-2 flex-1 min-w-0 w-44 ml-3">
           {getFileIcon(source.type, source.isNote)}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
