@@ -56,7 +56,7 @@ interface BidSetupDialogProps {
 }
 
 export function BidSetupDialog({ bid, open, onOpenChange, onComplete, onCancel }: BidSetupDialogProps) {
-  const { updateBid, addSourceToBid } = useBidStore();
+  const { updateBid, addSourceToBid, removeSourceFromBid } = useBidStore();
   const [formData, setFormData] = useState({
     title: bid.title || "",
     client: bid.client || "",
@@ -116,7 +116,11 @@ export function BidSetupDialog({ bid, open, onOpenChange, onComplete, onCancel }
   };
 
   const handleRemoveSource = (sourceId: string) => {
+    // Remove from local UI state
     setUploadedSources(prev => prev.filter(source => source.id !== sourceId));
+    
+    // Remove from bid's sources in the store
+    removeSourceFromBid(bid.id, sourceId);
   };
 
   const isFormValid = !!formData.title;
