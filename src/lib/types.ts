@@ -27,6 +27,7 @@ export interface Source {
   labels?: string[];
   createdAt: string;
   isNote?: true;
+  dataUrl?: string; // for persisted note-sources
 }
 
 export interface ClassificationLabel {

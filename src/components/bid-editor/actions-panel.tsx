@@ -171,7 +171,15 @@ export function ActionsPanel({ bidId }: ActionsPanelProps) {
     });
   };
 
-  const handleConvertNoteToSource = (noteId: string) => {
+  const formatBytes = (n: number) => {
+    if (n < 1024) return `${n} B`;
+    const units = ["KB", "MB", "GB", "TB"];
+    let i = -1;
+    do { n = n / 1024; i++; } while (n >= 1024 && i < units.length - 1);
+    return `${n.toFixed(n >= 10 ? 0 : 1)} ${units[i]}`;
+  };
+
+  const handleConvertNoteToSource = async (noteId: string) => {
     const note = bid?.actions?.notes.find(n => n.id === noteId);
     if (!note || !bidId) return;
 
@@ -179,20 +187,29 @@ export function ActionsPanel({ bidId }: ActionsPanelProps) {
     const availableLabels = ['Legal', 'Finance', 'Technical', 'Commercial', 'Admin'];
     const randomLabel = availableLabels[Math.floor(Math.random() * availableLabels.length)];
 
-    // Create source object
+    // Generate file content and encode as UTF-8
+    const content = `${note.title}\n\n${note.body ?? ""}`;
+    const bytes = new TextEncoder().encode(content);
+    const blob = new Blob([bytes], { type: "text/plain;charset=utf-8" });
+
+    // Convert blob to data URL for persistence
+    const dataUrl = await new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.readAsDataURL(blob);
+    });
+
+    // Create source object with proper byte-based size
     const source = {
       id: crypto.randomUUID(),
       name: note.title.endsWith('.txt') ? note.title : `${note.title}.txt`,
       type: 'note' as const,
-      size: `${note.body?.length ?? 0} chars`,
+      size: formatBytes(bytes.length),
       createdAt: new Date().toISOString(),
       isNote: true as const,
-      labels: [randomLabel]
+      labels: [randomLabel],
+      dataUrl: dataUrl
     };
-
-    // Create text content for the file
-    const textContent = `${note.title}\n\n${note.body || ''}`;
-    const blob = new Blob([textContent], { type: 'text/plain' });
 
     // Add to bid sources
     addSourceToBid(bidId, source, blob);
