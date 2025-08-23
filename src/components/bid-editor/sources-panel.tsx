@@ -221,7 +221,7 @@ export function SourcesPanel() {
 
   const renderFileRow = (source: Source, showLabels = true) => (
     <div key={source.id} className="group">
-      <div className="flex items-center gap-3 p-2 rounded-md hover:bg-accent/50 transition-colors">
+      <div className="flex items-center justify-between py-2 pl-2 pr-2 rounded-md hover:bg-accent/50 transition-colors">
         <Checkbox
           checked={selectedFiles.has(source.id)}
           onCheckedChange={(checked) => handleFileSelect(source.id, checked as boolean)}
