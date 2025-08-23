@@ -86,8 +86,12 @@ export function SourcesPanel() {
     Admin: true
   });
 
-  // Filter sources based on search query
+  // Filter sources based on search query and exclude sources that are still uploading
   const filteredSources = sources.filter(source => {
+    // Exclude sources that are still uploading (match by name)
+    const isStillUploading = uploadingSources.some(upload => upload.name === source.name);
+    if (isStillUploading) return false;
+    
     const searchLower = searchQuery.toLowerCase();
     const nameMatches = source.name.toLowerCase().includes(searchLower);
     const pathMatches = source.path?.toLowerCase().includes(searchLower);
