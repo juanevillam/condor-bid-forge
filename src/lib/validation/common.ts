@@ -7,6 +7,7 @@ export const sanitizeText = (input: string): string => {
     .replace(/[\x00-\x1F\x7F-\x9F]/g, '') // Remove control chars
     .replace(/[\u200B-\u200D\uFEFF]/g, '') // Remove zero-width chars
     .replace(/[<>`]/g, '') // Remove potential HTML injection chars
+    .replace(/[\u2013\u2014]/g, '-') // en/em dash -> hyphen
     .trim()
     .replace(/\s+/g, ' '); // Collapse whitespace
 };
@@ -44,7 +45,10 @@ export const safeTextSchema = z
   .max(120, "Must be 120 characters or less")
   .transform(sanitizeText)
   .refine(
-    (val) => /^[A-Za-zÀ-ÿ0-9\s.,'()&-]+$/.test(val),
+    // Allow letters (incl. accents), digits, spaces, and common punctuation:
+    // . , ' ( ) & - : / + _
+    // Also allow en dash (–) and em dash (—)
+    (val) => /^[A-Za-zÀ-ÿ0-9\s\.,'()&\-:\/+_–—]+$/.test(val),
     "Contains invalid characters"
   );
 
@@ -53,7 +57,7 @@ export const optionalSafeTextSchema = z
   .max(120, "Must be 120 characters or less")
   .transform(sanitizeText)
   .refine(
-    (val) => val === '' || /^[A-Za-zÀ-ÿ0-9\s.,'()&-]+$/.test(val),
+    (val) => val === '' || /^[A-Za-zÀ-ÿ0-9\s\.,'()&\-:\/+_–—]+$/.test(val),
     "Contains invalid characters"
   )
   .optional();
