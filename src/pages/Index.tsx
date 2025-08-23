@@ -21,7 +21,7 @@ const Index = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedBid, setSelectedBid] = useState<Bid | null>(null);
   const [editTitle, setEditTitle] = useState('');
-  const { bids, deleteBid, updateBid, addBid } = useBidStore();
+  const { bids, deleteBid, updateBid, addBid, getBidSources } = useBidStore();
 
   // Load sort preference from localStorage on mount
   useEffect(() => {
@@ -74,8 +74,7 @@ const Index = () => {
   };
 
   const getSourceCount = (bid: Bid) => {
-    // Mock source count - in real app this would come from the bid data
-    return Math.floor(Math.random() * 5);
+    return getBidSources(bid.id).length;
   };
 
   const handleEditClick = (bid: Bid, e: React.MouseEvent) => {
