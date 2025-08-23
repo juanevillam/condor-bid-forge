@@ -130,16 +130,11 @@ const Index = () => {
   };
 
   const handleCreateNewBid = () => {
-    // Create a new bid immediately and navigate to the editor with setup flag
-    const newBid = addBid({
-      title: "",
-      client: "",
-      submissionDeadline: "",
-      stage: "discovery"
-    });
+    // Create a placeholder bid without validation and navigate to the editor with setup flag
+    const newBidId = addBid({}, { validate: false });
     
     // Navigate to the editor with setup query parameter
-    navigate(`/bids/${newBid}/edit?setup=1`);
+    navigate(`/bids/${newBidId}/edit?setup=1`);
   };
 
   return (

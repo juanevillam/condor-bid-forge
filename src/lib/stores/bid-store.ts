@@ -19,7 +19,7 @@ const handleValidationError = (error: unknown, operation: string) => {
 interface BidStore {
   bids: Bid[];
   bidSources: Record<string, Source[]>; // bidId -> sources
-  addBid: (bid: Omit<Bid, 'id' | 'createdAt' | 'deadlines' | 'milestones' | 'actions'>) => string;
+  addBid: (bid: Partial<Bid>, opts?: { validate?: boolean }) => string;
   updateBid: (id: string, updates: Partial<Bid>) => void;
   deleteBid: (id: string) => void;
   getBid: (id: string) => Bid | undefined;
@@ -68,11 +68,33 @@ export const useBidStore = create<BidStore>()(
       bids: [],
       bidSources: {},
       
-      addBid: (bidData) => {
-        // Validate input data
+      addBid: (bidData, opts = {}) => {
+        const { validate = true } = opts;
+        const id = crypto.randomUUID();
+        
+        // Skip validation if validate is false
+        if (!validate) {
+          const newBid: Bid = {
+            id,
+            title: bidData.title || '',
+            client: bidData.client || '',
+            submissionDeadline: bidData.submissionDeadline || '',
+            stage: bidData.stage || 'discovery',
+            createdAt: new Date().toISOString(),
+            deadlines: [],
+            milestones: mockBid.milestones
+          };
+          
+          set((state) => ({
+            bids: [...state.bids, newBid]
+          }));
+          
+          return id;
+        }
+        
+        // Validate input data when validate is true
         try {
           const validatedData = createBidSchema.parse(bidData);
-          const id = crypto.randomUUID();
           const newBid: Bid = {
             title: validatedData.title,
             client: validatedData.client || '',
