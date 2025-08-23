@@ -7,10 +7,11 @@ import { Separator } from "@/components/ui/separator";
 import { AuthLayout } from "@/components/layout/auth-layout";
 import { GoogleLogo, MicrosoftLogo } from "@/components/ui/brand-logos";
 
+// TODO: Demo credentials are prefilled for development only - must not ship to production
 export default function Login() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("test@condorai.us");
+  const [password, setPassword] = useState("test123");
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
 
   const validateForm = () => {
@@ -33,8 +34,14 @@ export default function Login() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
-      // Mock login - just navigate to main app
-      navigate("/app");
+      // Check if using demo credentials for instant login
+      if (email === "test@condorai.us" && password === "test123") {
+        // Demo login - instant redirect
+        navigate("/app");
+      } else {
+        // Mock login with user-edited credentials - just navigate to main app
+        navigate("/app");
+      }
     }
   };
 
@@ -80,6 +87,10 @@ export default function Login() {
           Log in
         </Button>
       </form>
+
+      <p className="text-xs text-muted-foreground text-center mt-3">
+        Demo creds prefilled: test@condorai.us / test123
+      </p>
 
       <div className="space-y-4">
         <div className="relative">
