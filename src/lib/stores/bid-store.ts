@@ -2,6 +2,19 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Bid, BidActionsData, Source } from '../types';
 import { mockBid } from '../mock-data';
+import { createBidSchema, updateBidSchema } from '../validation/bids';
+import { sourceSchema } from '../validation/sources';
+import { createNoteSchema, updateNoteSchema } from '../validation/notes';
+import { ZodError } from 'zod';
+
+// Validation error handler
+const handleValidationError = (error: unknown, operation: string) => {
+  if (error instanceof ZodError) {
+    console.error(`Validation failed in ${operation}:`, error.errors);
+    throw new Error(`Invalid data provided to ${operation}`);
+  }
+  throw error;
+};
 
 interface BidStore {
   bids: Bid[];
@@ -56,28 +69,44 @@ export const useBidStore = create<BidStore>()(
       bidSources: {},
       
       addBid: (bidData) => {
-        const id = crypto.randomUUID();
-        const newBid: Bid = {
-          ...bidData,
-          id,
-          createdAt: new Date().toISOString(),
-          deadlines: [],
-          milestones: mockBid.milestones
-        };
-        
-        set((state) => ({
-          bids: [...state.bids, newBid]
-        }));
-        
-        return id;
+        // Validate input data
+        try {
+          const validatedData = createBidSchema.parse(bidData);
+          const id = crypto.randomUUID();
+          const newBid: Bid = {
+            title: validatedData.title,
+            client: validatedData.client || '',
+            submissionDeadline: validatedData.submissionDeadline || '',
+            stage: validatedData.stage || 'discovery',
+            id,
+            createdAt: new Date().toISOString(),
+            deadlines: [],
+            milestones: mockBid.milestones
+          };
+          
+          set((state) => ({
+            bids: [...state.bids, newBid]
+          }));
+          
+          return id;
+        } catch (error) {
+          handleValidationError(error, 'addBid');
+          return '';
+        }
       },
       
       updateBid: (id, updates) => {
-        set((state) => ({
-          bids: state.bids.map((bid) =>
-            bid.id === id ? { ...bid, ...updates } : bid
-          )
-        }));
+        // Validate updates
+        try {
+          const validatedUpdates = updateBidSchema.parse(updates);
+          set((state) => ({
+            bids: state.bids.map((bid) =>
+              bid.id === id ? { ...bid, ...validatedUpdates } : bid
+            )
+          }));
+        } catch (error) {
+          handleValidationError(error, 'updateBid');
+        }
       },
       
       deleteBid: (id) => {
@@ -91,6 +120,21 @@ export const useBidStore = create<BidStore>()(
       },
       
       updateBidActions: (id, actionsUpdate) => {
+        // Validate notes if they're being updated
+        if (actionsUpdate.notes) {
+          try {
+            actionsUpdate.notes.forEach(note => {
+              createNoteSchema.parse({
+                title: note.title,
+                body: note.body
+              });
+            });
+          } catch (error) {
+            handleValidationError(error, 'updateBidActions');
+            return;
+          }
+        }
+
         set((state) => ({
           bids: state.bids.map((bid) =>
             bid.id === id 
@@ -142,13 +186,19 @@ export const useBidStore = create<BidStore>()(
 
       // Source management methods
       addSourceToBid: (bidId, source, fileBlob) => {
-        storeFileBlob(source.id, fileBlob);
-        set((state) => ({
-          bidSources: {
-            ...state.bidSources,
-            [bidId]: [...(state.bidSources[bidId] || []), source]
-          }
-        }));
+        // Validate source data
+        try {
+          const validatedSource = sourceSchema.parse(source) as Source;
+          storeFileBlob(validatedSource.id, fileBlob);
+          set((state) => ({
+            bidSources: {
+              ...state.bidSources,
+              [bidId]: [...(state.bidSources[bidId] || []), validatedSource]
+            }
+          }));
+        } catch (error) {
+          handleValidationError(error, 'addSourceToBid');
+        }
       },
 
       removeSourceFromBid: (bidId, sourceId) => {

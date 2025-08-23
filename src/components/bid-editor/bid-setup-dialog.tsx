@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -8,7 +10,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Upload, FileText, X } from "lucide-react";
 import { useBidStore } from "@/lib/stores/bid-store";
+import { useToast } from "@/hooks/use-toast";
 import type { Bid, Source } from "@/lib/types";
+import { bidSetupSchema, type BidSetupData } from "@/lib/validation/bids";
+import { fileUploadSchema, ALLOWED_MIME_TYPES, MAX_FILE_SIZE, MAX_FILES_PER_UPLOAD } from "@/lib/validation/sources";
+import { sanitizeFilename } from "@/lib/validation/common";
 
 const LABEL_COLORS = {
   Legal: "bg-indigo-500/15 text-indigo-500",
@@ -57,60 +63,100 @@ interface BidSetupDialogProps {
 
 export function BidSetupDialog({ bid, open, onOpenChange, onComplete, onCancel }: BidSetupDialogProps) {
   const { updateBid, addSourceToBid, removeSourceFromBid } = useBidStore();
-  const [formData, setFormData] = useState({
-    title: bid.title || "",
-    client: bid.client || "",
-    submissionDeadline: bid.submissionDeadline || "",
-    stage: bid.stage || "" as "discovery" | "proposal" | "review" | "submitted" | "",
-    description: "",
-  });
+  const { toast } = useToast();
   const [uploadedSources, setUploadedSources] = useState<Source[]>([]);
+  const [fileErrors, setFileErrors] = useState<string[]>([]);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!formData.title) {
-      return;
+  const form = useForm<BidSetupData>({
+    resolver: zodResolver(bidSetupSchema),
+    defaultValues: {
+      title: bid.title || "",
+      client: bid.client || "",
+      submissionDeadline: bid.submissionDeadline || "",
+      stage: bid.stage || "",
+      description: "",
     }
+  });
 
-    // Update the existing bid with the form data
-    updateBid(bid.id, {
-      title: formData.title,
-      client: formData.client || undefined,
-      submissionDeadline: formData.submissionDeadline || undefined,
-      stage: formData.stage || undefined
-    });
+  const { handleSubmit, register, setValue, watch, formState: { errors, isValid } } = form;
 
-    onComplete();
+  const onSubmit = (data: BidSetupData) => {
+    try {
+      // Update the existing bid with the form data
+      updateBid(bid.id, {
+        title: data.title,
+        client: data.client || undefined,
+        submissionDeadline: data.submissionDeadline || undefined,
+        stage: data.stage as any || undefined
+      });
+
+      onComplete();
+    } catch (error) {
+      toast({
+        title: "Validation Error",
+        description: "Please check your input and try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
 
     const files = Array.from(e.target.files);
+    const newErrors: string[] = [];
+    
+    // Check file count limit
+    if (files.length > MAX_FILES_PER_UPLOAD) {
+      newErrors.push(`Cannot upload more than ${MAX_FILES_PER_UPLOAD} files at once`);
+      setFileErrors(newErrors);
+      return;
+    }
+
+    if (uploadedSources.length + files.length > MAX_FILES_PER_UPLOAD) {
+      newErrors.push(`Total files cannot exceed ${MAX_FILES_PER_UPLOAD}`);
+      setFileErrors(newErrors);
+      return;
+    }
     
     for (const file of files) {
-      // Create source object like in sources-panel
-      const source: Source = {
-        id: crypto.randomUUID(),
-        name: file.name,
-        type: getFileType(file.name),
-        size: formatFileSize(file.size),
-        labels: getRandomLabels(),
-        createdAt: new Date().toISOString()
-      };
-
-      // Add to local state for UI display
-      setUploadedSources(prev => [...prev, source]);
-
-      // Store the file in the bid store
       try {
+        // Validate file
+        fileUploadSchema.parse({ file });
+
+        // Validate filename after sanitization
+        const sanitizedName = sanitizeFilename(file.name);
+        if (!sanitizedName || sanitizedName.length === 0) {
+          newErrors.push(`Invalid filename: ${file.name}`);
+          continue;
+        }
+
+        // Create source object like in sources-panel
+        const source: Source = {
+          id: crypto.randomUUID(),
+          name: sanitizedName,
+          type: getFileType(sanitizedName),
+          size: formatFileSize(file.size),
+          labels: getRandomLabels(),
+          createdAt: new Date().toISOString()
+        };
+
+        // Add to local state for UI display
+        setUploadedSources(prev => [...prev, source]);
+
+        // Store the file in the bid store
         addSourceToBid(bid.id, source, file);
       } catch (error) {
-        console.error('Failed to upload file:', error);
+        if (error instanceof Error) {
+          newErrors.push(`${file.name}: ${error.message}`);
+        } else {
+          newErrors.push(`${file.name}: Upload failed`);
+        }
       }
     }
 
+    setFileErrors(newErrors);
+    
     // Clear the input
     e.target.value = '';
   };
@@ -123,7 +169,7 @@ export function BidSetupDialog({ bid, open, onOpenChange, onComplete, onCancel }
     removeSourceFromBid(bid.id, sourceId);
   };
 
-  const isFormValid = !!formData.title;
+  const isFormValid = watch("title")?.length > 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -135,7 +181,7 @@ export function BidSetupDialog({ bid, open, onOpenChange, onComplete, onCancel }
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {/* Basic Information */}
           <div className="space-y-4">
             <h3 className="text-sm font-medium">Basic Information</h3>
@@ -146,10 +192,12 @@ export function BidSetupDialog({ bid, open, onOpenChange, onComplete, onCancel }
                 <Input
                   id="title"
                   placeholder="e.g., Federal Infrastructure Modernization RFP"
-                  value={formData.title}
-                  onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                  required
+                  {...register("title")}
+                  className={errors.title ? "border-destructive" : ""}
                 />
+                {errors.title && (
+                  <p className="text-sm text-destructive">{errors.title.message}</p>
+                )}
               </div>
               
               <div className="space-y-2">
@@ -157,9 +205,12 @@ export function BidSetupDialog({ bid, open, onOpenChange, onComplete, onCancel }
                 <Input
                   id="client"
                   placeholder="e.g., Department of Transportation"
-                  value={formData.client}
-                  onChange={(e) => setFormData(prev => ({ ...prev, client: e.target.value }))}
+                  {...register("client")}
+                  className={errors.client ? "border-destructive" : ""}
                 />
+                {errors.client && (
+                  <p className="text-sm text-destructive">{errors.client.message}</p>
+                )}
               </div>
             </div>
 
@@ -169,15 +220,18 @@ export function BidSetupDialog({ bid, open, onOpenChange, onComplete, onCancel }
                 <Input
                   id="deadline"
                   type="date"
-                  value={formData.submissionDeadline}
-                  onChange={(e) => setFormData(prev => ({ ...prev, submissionDeadline: e.target.value }))}
+                  {...register("submissionDeadline")}
+                  className={errors.submissionDeadline ? "border-destructive" : ""}
                 />
+                {errors.submissionDeadline && (
+                  <p className="text-sm text-destructive">{errors.submissionDeadline.message}</p>
+                )}
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="stage">Current Stage</Label>
-                <Select onValueChange={(value: "discovery" | "proposal" | "review" | "submitted") => setFormData(prev => ({ ...prev, stage: value }))}>
-                  <SelectTrigger>
+                <Select onValueChange={(value) => setValue("stage", value)}>
+                  <SelectTrigger className={errors.stage ? "border-destructive" : ""}>
                     <SelectValue placeholder="Select current stage" />
                   </SelectTrigger>
                   <SelectContent>
@@ -187,6 +241,9 @@ export function BidSetupDialog({ bid, open, onOpenChange, onComplete, onCancel }
                     <SelectItem value="submitted">Submitted</SelectItem>
                   </SelectContent>
                 </Select>
+                {errors.stage && (
+                  <p className="text-sm text-destructive">{errors.stage.message}</p>
+                )}
               </div>
             </div>
 
@@ -195,10 +252,12 @@ export function BidSetupDialog({ bid, open, onOpenChange, onComplete, onCancel }
               <Textarea
                 id="description"
                 placeholder="Brief description of the opportunity, key requirements, or strategic notes..."
-                value={formData.description}
-                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                className="min-h-[80px]"
+                {...register("description")}
+                className={`min-h-[80px] ${errors.description ? "border-destructive" : ""}`}
               />
+              {errors.description && (
+                <p className="text-sm text-destructive">{errors.description.message}</p>
+              )}
             </div>
           </div>
 
@@ -210,7 +269,7 @@ export function BidSetupDialog({ bid, open, onOpenChange, onComplete, onCancel }
               <input
                 type="file"
                 multiple
-                accept=".pdf,.docx,.xlsx,.txt"
+                accept={ALLOWED_MIME_TYPES.join(',')}
                 onChange={handleFileUpload}
                 className="hidden"
                 id="dialog-file-upload"
@@ -221,10 +280,19 @@ export function BidSetupDialog({ bid, open, onOpenChange, onComplete, onCancel }
                   Drag & drop files here or click to browse
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Supports PDF, DOCX, XLSX, TXT
+                  Supports PDF, DOCX, XLSX, TXT (max {Math.round(MAX_FILE_SIZE / (1024 * 1024))}MB each, {MAX_FILES_PER_UPLOAD} files max)
                 </p>
               </label>
             </div>
+
+            {/* File Upload Errors */}
+            {fileErrors.length > 0 && (
+              <div className="space-y-1">
+                {fileErrors.map((error, index) => (
+                  <p key={index} className="text-sm text-destructive">{error}</p>
+                ))}
+              </div>
+            )}
 
             {uploadedSources.length > 0 && (
               <div className="space-y-2">

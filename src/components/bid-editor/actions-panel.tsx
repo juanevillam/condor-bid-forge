@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -28,6 +30,8 @@ import {
 } from "lucide-react";
 import { useBidStore } from "@/lib/stores/bid-store";
 import type { ProposalStatus } from "@/lib/types";
+import { createNoteSchema, type CreateNoteData } from "@/lib/validation/notes";
+import { sanitizeText } from "@/lib/validation/common";
 
 interface ActionsPanelProps {
   bidId: string;
@@ -38,8 +42,16 @@ export function ActionsPanel({ bidId }: ActionsPanelProps) {
   const { toast } = useToast();
   const [isNoteDialogOpen, setIsNoteDialogOpen] = useState(false);
   const [editingNote, setEditingNote] = useState<string | null>(null);
-  const [noteTitle, setNoteTitle] = useState("");
-  const [noteBody, setNoteBody] = useState("");
+
+  const form = useForm<CreateNoteData>({
+    resolver: zodResolver(createNoteSchema),
+    defaultValues: {
+      title: "",
+      body: ""
+    }
+  });
+
+  const { handleSubmit, register, reset, formState: { errors, isValid } } = form;
 
   const bid = getBid(bidId);
 
@@ -82,8 +94,7 @@ export function ActionsPanel({ bidId }: ActionsPanelProps) {
 
   const handleAddNote = () => {
     setEditingNote(null);
-    setNoteTitle("");
-    setNoteBody("");
+    reset({ title: "", body: "" });
     setIsNoteDialogOpen(true);
   };
 
@@ -91,8 +102,7 @@ export function ActionsPanel({ bidId }: ActionsPanelProps) {
     const note = bid?.actions?.notes.find(n => n.id === noteId);
     if (note) {
       setEditingNote(noteId);
-      setNoteTitle(note.title);
-      setNoteBody(note.body || "");
+      reset({ title: note.title, body: note.body || "" });
       setIsNoteDialogOpen(true);
     }
   };
@@ -104,38 +114,43 @@ export function ActionsPanel({ bidId }: ActionsPanelProps) {
     });
   };
 
-  const handleSaveNote = () => {
-    if (!noteTitle.trim()) return;
-
-    const currentNotes = bid?.actions?.notes || [];
-    
-    if (editingNote) {
-      // Edit existing note
-      updateBidActions(bidId, {
-        notes: currentNotes.map(note => 
-          note.id === editingNote 
-            ? { ...note, title: noteTitle, body: noteBody, updatedAt: new Date().toISOString() }
-            : note
-        )
-      });
-    } else {
-      // Add new note
-      const newNote = {
-        id: crypto.randomUUID(),
-        title: noteTitle,
-        body: noteBody,
-        createdAt: new Date().toISOString()
-      };
+  const onSubmitNote = (data: CreateNoteData) => {
+    try {
+      const currentNotes = bid?.actions?.notes || [];
       
-      updateBidActions(bidId, {
-        notes: [newNote, ...currentNotes]
+      if (editingNote) {
+        // Edit existing note
+        updateBidActions(bidId, {
+          notes: currentNotes.map(note => 
+            note.id === editingNote 
+              ? { ...note, title: data.title, body: data.body, updatedAt: new Date().toISOString() }
+              : note
+          )
+        });
+      } else {
+        // Add new note
+        const newNote = {
+          id: crypto.randomUUID(),
+          title: data.title,
+          body: data.body,
+          createdAt: new Date().toISOString()
+        };
+        
+        updateBidActions(bidId, {
+          notes: [newNote, ...currentNotes]
+        });
+      }
+
+      setIsNoteDialogOpen(false);
+      reset({ title: "", body: "" });
+      setEditingNote(null);
+    } catch (error) {
+      toast({
+        title: "Validation Error",
+        description: "Please check your input and try again.",
+        variant: "destructive"
       });
     }
-
-    setIsNoteDialogOpen(false);
-    setNoteTitle("");
-    setNoteBody("");
-    setEditingNote(null);
   };
 
   const getStatusColor = (status: ProposalStatus) => {
@@ -474,32 +489,42 @@ export function ActionsPanel({ bidId }: ActionsPanelProps) {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4">
+          <form onSubmit={handleSubmit(onSubmitNote)} className="space-y-4">
             <div>
               <Input
                 placeholder="Note title"
-                value={noteTitle}
-                onChange={(e) => setNoteTitle(e.target.value)}
+                {...register("title")}
+                className={errors.title ? "border-destructive" : ""}
               />
+              {errors.title && (
+                <p className="text-sm text-destructive mt-1">{errors.title.message}</p>
+              )}
             </div>
             <div>
               <Textarea
                 placeholder="Note content (optional)"
-                value={noteBody}
-                onChange={(e) => setNoteBody(e.target.value)}
+                {...register("body")}
                 rows={4}
+                className={errors.body ? "border-destructive" : ""}
               />
+              {errors.body && (
+                <p className="text-sm text-destructive mt-1">{errors.body.message}</p>
+              )}
             </div>
-          </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsNoteDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleSaveNote} disabled={!noteTitle.trim()}>
-              {editingNote ? 'Update' : 'Save'}
-            </Button>
-          </DialogFooter>
+            <DialogFooter>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => setIsNoteDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={!isValid}>
+                {editingNote ? 'Update' : 'Save'}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </div>
