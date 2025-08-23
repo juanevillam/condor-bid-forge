@@ -23,7 +23,8 @@ import {
   Edit,
   Trash2,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  FileDown
 } from "lucide-react";
 import { useBidStore } from "@/lib/stores/bid-store";
 import type { ProposalStatus } from "@/lib/types";
@@ -33,7 +34,7 @@ interface ActionsPanelProps {
 }
 
 export function ActionsPanel({ bidId }: ActionsPanelProps) {
-  const { getBid, updateBidActions, initializeBidActions } = useBidStore();
+  const { getBid, updateBidActions, initializeBidActions, addSourceToBid } = useBidStore();
   const { toast } = useToast();
   const [isNoteDialogOpen, setIsNoteDialogOpen] = useState(false);
   const [editingNote, setEditingNote] = useState<string | null>(null);
@@ -167,6 +168,38 @@ export function ActionsPanel({ bidId }: ActionsPanelProps) {
       day: 'numeric',
       hour: 'numeric',
       minute: '2-digit'
+    });
+  };
+
+  const handleConvertNoteToSource = (noteId: string) => {
+    const note = bid?.actions?.notes.find(n => n.id === noteId);
+    if (!note || !bidId) return;
+
+    // Get random label from available options
+    const availableLabels = ['Legal', 'Finance', 'Technical', 'Commercial', 'Admin'];
+    const randomLabel = availableLabels[Math.floor(Math.random() * availableLabels.length)];
+
+    // Create source object
+    const source = {
+      id: crypto.randomUUID(),
+      name: note.title.endsWith('.txt') ? note.title : `${note.title}.txt`,
+      type: 'note' as const,
+      size: `${note.body?.length ?? 0} chars`,
+      createdAt: new Date().toISOString(),
+      isNote: true as const,
+      labels: [randomLabel]
+    };
+
+    // Create text content for the file
+    const textContent = `${note.title}\n\n${note.body || ''}`;
+    const blob = new Blob([textContent], { type: 'text/plain' });
+
+    // Add to bid sources
+    addSourceToBid(bidId, source, blob);
+
+    toast({
+      title: "Note converted to source",
+      description: `"${note.title}" has been added to your sources under ${randomLabel}.`
     });
   };
 
@@ -381,6 +414,10 @@ export function ActionsPanel({ bidId }: ActionsPanelProps) {
                             <DropdownMenuItem onClick={() => handleEditNote(note.id)}>
                               <Edit className="w-3 h-3 mr-2" />
                               Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleConvertNoteToSource(note.id)}>
+                              <FileDown className="w-3 h-3 mr-2" />
+                              Convert to source
                             </DropdownMenuItem>
                             <DropdownMenuItem 
                               onClick={() => handleDeleteNote(note.id)}

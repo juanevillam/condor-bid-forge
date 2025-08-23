@@ -105,6 +105,11 @@ export function SourcesPanel() {
     );
   };
 
+  // Get original documents (non-note sources)
+  const getOriginalDocuments = () => {
+    return filteredSources.filter(source => !source.isNote);
+  };
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || !bidId) return;
 
@@ -155,8 +160,11 @@ export function SourcesPanel() {
     e.target.value = '';
   };
 
-  const getFileIcon = (type: string) => {
+  const getFileIcon = (type: string, isNote?: boolean) => {
     const iconProps = "w-4 h-4";
+    if (type === 'note' || isNote) {
+      return <FileText className={`${iconProps} text-purple-500`} />;
+    }
     switch (type) {
       case 'pdf': return <FileText className={`${iconProps} text-red-500`} />;
       case 'docx': return <FileText className={`${iconProps} text-blue-500`} />;
@@ -220,7 +228,7 @@ export function SourcesPanel() {
         />
         
         <div className="flex items-start gap-2 flex-1 min-w-0">
-          {getFileIcon(source.type)}
+          {getFileIcon(source.type, source.isNote)}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <p className="text-sm font-medium truncate">{source.name}</p>
@@ -340,45 +348,49 @@ export function SourcesPanel() {
         {hasAnySources && filteredSources.length > 0 && (
           <div className="flex-1 space-y-4 w-full">
             {/* Original Documents */}
-            <Collapsible open={originalDocsOpen} onOpenChange={setOriginalDocsOpen}>
-              <div className="flex items-center justify-between p-2 hover:bg-accent/50 rounded-md">
-                <div className="flex items-center gap-2">
-                  <CollapsibleTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-auto p-1">
+            {getOriginalDocuments().length > 0 && (
+              <>
+                <Collapsible open={originalDocsOpen} onOpenChange={setOriginalDocsOpen}>
+                  <div className="flex items-center justify-between p-2 hover:bg-accent/50 rounded-md">
+                    <div className="flex items-center gap-2">
+                      <CollapsibleTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-auto p-1">
+                          {originalDocsOpen ? (
+                            <ChevronDown className="w-4 h-4" />
+                          ) : (
+                            <ChevronRight className="w-4 h-4" />
+                          )}
+                        </Button>
+                      </CollapsibleTrigger>
                       {originalDocsOpen ? (
-                        <ChevronDown className="w-4 h-4" />
+                        <FolderOpen className="w-4 h-4 text-muted-foreground" />
                       ) : (
-                        <ChevronRight className="w-4 h-4" />
+                        <Folder className="w-4 h-4 text-muted-foreground" />
                       )}
-                    </Button>
-                  </CollapsibleTrigger>
-                  {originalDocsOpen ? (
-                    <FolderOpen className="w-4 h-4 text-muted-foreground" />
-                  ) : (
-                    <Folder className="w-4 h-4 text-muted-foreground" />
-                  )}
-                  <span className="text-sm font-medium">Original Documents</span>
-                  <Badge variant="secondary" className="text-xs">
-                    {filteredSources.length}
-                  </Badge>
-                </div>
-                <Checkbox
-                  checked={getCheckboxState(filteredSources.map(s => s.id))}
-                  onCheckedChange={(checked) => 
-                    handleSelectAll(filteredSources.map(s => s.id), checked as CheckboxState)
-                  }
-                />
-              </div>
-              <CollapsibleContent>
-                <ScrollArea className="max-h-64">
-                  <div className="space-y-1 ml-4">
-                    {filteredSources.map(source => renderFileRow(source, true))}
+                      <span className="text-sm font-medium">Original Documents</span>
+                      <Badge variant="secondary" className="text-xs">
+                        {getOriginalDocuments().length}
+                      </Badge>
+                    </div>
+                    <Checkbox
+                      checked={getCheckboxState(getOriginalDocuments().map(s => s.id))}
+                      onCheckedChange={(checked) => 
+                        handleSelectAll(getOriginalDocuments().map(s => s.id), checked as CheckboxState)
+                      }
+                    />
                   </div>
-                </ScrollArea>
-              </CollapsibleContent>
-            </Collapsible>
+                  <CollapsibleContent>
+                    <ScrollArea className="max-h-64">
+                      <div className="space-y-1 ml-4">
+                        {getOriginalDocuments().map(source => renderFileRow(source, true))}
+                      </div>
+                    </ScrollArea>
+                  </CollapsibleContent>
+                </Collapsible>
 
-            <Separator />
+                <Separator />
+              </>
+            )}
 
             {/* Category Blocks */}
             {Object.entries(categoryStates).map(([category, isOpen]) => {

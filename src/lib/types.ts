@@ -21,11 +21,12 @@ export interface Deadline {
 export interface Source {
   id: string;
   name: string;
-  type: 'pdf' | 'docx' | 'xlsx' | 'txt';
+  type: 'pdf' | 'docx' | 'xlsx' | 'txt' | 'note' | 'custom';
   size: string;
   path?: string;
   labels?: string[];
   createdAt: string;
+  isNote?: true;
 }
 
 export interface ClassificationLabel {
