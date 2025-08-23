@@ -62,34 +62,55 @@ export function ActionsPanel({ bidId }: ActionsPanelProps) {
   }, [bidId, bid, initializeBidActions]);
 
   const handleBriefingDoc = () => {
-    const today = new Date().toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric', 
-      year: 'numeric' 
-    });
-    
-    const briefingContent = `• Key requirements analysis complete
-• Technical feasibility confirmed
-• Budget estimates within range
-• Risk assessment in progress
-• Stakeholder alignment needed`;
+    if (!bid) {
+      toast({
+        title: "Error",
+        description: "No active bid found.",
+        variant: "destructive"
+      });
+      return;
+    }
 
-    const newNote = {
-      id: crypto.randomUUID(),
-      title: `Briefing doc – ${today}`,
-      body: briefingContent,
-      createdAt: new Date().toISOString()
-    };
+    try {
+      const now = new Date();
+      const dateTime = now.toLocaleString('en-CA', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      }).replace(', ', ' ');
 
-    const currentNotes = bid?.actions?.notes || [];
-    updateBidActions(bidId, {
-      notes: [newNote, ...currentNotes]
-    });
+      const briefingTemplate = `# Briefing doc
+• Objective:
+• Key deadlines:
+• Compliance risks:
+• Open questions:`;
 
-    toast({
-      title: "Briefing doc created",
-      description: "Your briefing document has been generated and saved to notes."
-    });
+      const newNote = {
+        id: crypto.randomUUID(),
+        title: `Briefing doc — ${dateTime}`,
+        body: briefingTemplate,
+        createdAt: new Date().toISOString()
+      };
+
+      const currentNotes = bid?.actions?.notes || [];
+      updateBidActions(bidId, {
+        notes: [newNote, ...currentNotes]
+      });
+
+      toast({
+        title: "Briefing doc added to Notes",
+        description: "Your briefing document template has been created."
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to create briefing document. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleAddNote = () => {
@@ -245,8 +266,10 @@ export function ActionsPanel({ bidId }: ActionsPanelProps) {
             {/* Action Tiles */}
             <div>
               <Card 
-                className="p-4 hover:bg-accent/50 transition-colors cursor-pointer group rounded-2xl shadow-sm"
-                onClick={handleBriefingDoc}
+                className={`p-4 hover:bg-accent/50 transition-colors group rounded-2xl shadow-sm ${
+                  !bid ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+                }`}
+                onClick={bid ? handleBriefingDoc : undefined}
               >
                 <div className="flex items-center gap-3">
                   <div className="flex-shrink-0">
