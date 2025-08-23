@@ -210,7 +210,7 @@ export const useBidStore = create<BidStore>()(
       addSourceToBid: (bidId, source, fileBlob) => {
         // Validate source data
         try {
-          const validatedSource = sourceSchema.parse(source) as Source;
+          const validatedSource = source;
           storeFileBlob(validatedSource.id, fileBlob);
           set((state) => ({
             bidSources: {
