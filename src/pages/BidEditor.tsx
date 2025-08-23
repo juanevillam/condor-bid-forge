@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -24,17 +23,6 @@ import { Bid, ChatMessage } from "@/lib/types";
 import { mockMessages } from "@/lib/mock-data";
 
 // Helper functions
-const getStageColor = (stage: string): string => {
-  const stageColors = {
-    discovery: "bg-info/20 text-info",
-    proposal: "bg-warning/20 text-warning",
-    review: "bg-accent text-accent-foreground",
-    submitted: "bg-success/20 text-success",
-  } as const;
-  
-  return stageColors[stage as keyof typeof stageColors] || "bg-muted text-muted-foreground";
-};
-
 const PANEL_WIDTHS = {
   expanded: "w-80",
   collapsed: "w-14",
@@ -246,10 +234,6 @@ export default function BidEditor() {
             </div>
 
             <div className="flex items-center gap-3">
-              <Badge className={getStageColor(bid.stage)}>
-                {bid.stage}
-              </Badge>
-
               {isMobile && (
                 <div className="flex gap-1">
                   {renderSidePanel(
