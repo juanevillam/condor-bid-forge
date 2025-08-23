@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { useParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,8 +25,8 @@ import {
   Download,
   Trash2
 } from "lucide-react";
-import { mockSources, uploadSource } from "@/lib/mock-data";
 import { Source } from "@/lib/types";
+import { useBidStore } from "@/lib/stores/bid-store";
 
 type CheckboxState = boolean | 'indeterminate';
 
@@ -37,10 +38,42 @@ const LABEL_COLORS = {
   Admin: "bg-slate-500/15 text-slate-500",
 } as const;
 
+// Helper function to get random labels
+const getRandomLabels = (): string[] => {
+  const availableLabels = ['Legal', 'Finance', 'Technical', 'Commercial', 'Admin'];
+  const numLabels = Math.random() < 0.5 ? 1 : 2; // 1 or 2 labels
+  const shuffled = [...availableLabels].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, numLabels);
+};
+
+// Helper function to format file size
+const formatFileSize = (bytes: number): string => {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+};
+
+// Helper function to get file type from extension
+const getFileType = (filename: string): 'pdf' | 'docx' | 'xlsx' | 'txt' => {
+  const ext = filename.split('.').pop()?.toLowerCase();
+  switch (ext) {
+    case 'pdf': return 'pdf';
+    case 'docx': case 'doc': return 'docx';
+    case 'xlsx': case 'xls': return 'xlsx';
+    case 'txt': return 'txt';
+    default: return 'txt';
+  }
+};
+
 export function SourcesPanel() {
-  const [sources, setSources] = useState<Source[]>(mockSources);
+  const { id: bidId } = useParams<{ id: string }>();
+  const { getBidSources, addSourceToBid, removeSourceFromBid, downloadSource } = useBidStore();
+  
+  const sources = bidId ? getBidSources(bidId) : [];
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
-  const [uploadingSources, setUploadingSources] = useState<{ id: string; progress: number }[]>([]);
+  const [uploadingSources, setUploadingSources] = useState<{ id: string; name: string; progress: number }[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [originalDocsOpen, setOriginalDocsOpen] = useState(true);
 
@@ -73,14 +106,15 @@ export function SourcesPanel() {
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files) return;
+    if (!e.target.files || !bidId) return;
 
     const files = Array.from(e.target.files);
     
     for (const file of files) {
       const uploadId = Math.random().toString(36).substr(2, 9);
-      setUploadingSources(prev => [...prev, { id: uploadId, progress: 0 }]);
+      setUploadingSources(prev => [...prev, { id: uploadId, name: file.name, progress: 0 }]);
 
+      // Simulate upload progress
       const interval = setInterval(() => {
         setUploadingSources(prev => 
           prev.map(upload => 
@@ -91,17 +125,34 @@ export function SourcesPanel() {
         );
       }, 200);
 
+      // Create source object
+      const source: Source = {
+        id: crypto.randomUUID(),
+        name: file.name,
+        type: getFileType(file.name),
+        size: formatFileSize(file.size),
+        labels: getRandomLabels(),
+        createdAt: new Date().toISOString()
+      };
+
+      // Store the file and source
       try {
-        const source = await uploadSource(file);
-        setSources(prev => [...prev, source]);
+        addSourceToBid(bidId, source, file);
         
-        clearInterval(interval);
-        setUploadingSources(prev => prev.filter(upload => upload.id !== uploadId));
+        // Complete upload after a short delay
+        setTimeout(() => {
+          clearInterval(interval);
+          setUploadingSources(prev => prev.filter(upload => upload.id !== uploadId));
+        }, 1000 + Math.random() * 1000);
       } catch (error) {
         clearInterval(interval);
         setUploadingSources(prev => prev.filter(upload => upload.id !== uploadId));
+        console.error('Failed to upload file:', error);
       }
     }
+
+    // Clear the input
+    e.target.value = '';
   };
 
   const getFileIcon = (type: string) => {
@@ -141,6 +192,21 @@ export function SourcesPanel() {
       } else {
         newSet.delete(fileId);
       }
+      return newSet;
+    });
+  };
+
+  const handleDownload = (sourceId: string) => {
+    downloadSource(sourceId);
+  };
+
+  const handleRemove = (sourceId: string) => {
+    if (!bidId) return;
+    removeSourceFromBid(bidId, sourceId);
+    // Remove from selection if selected
+    setSelectedFiles(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(sourceId);
       return newSet;
     });
   };
@@ -185,11 +251,14 @@ export function SourcesPanel() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleDownload(source.id)}>
               <Download className="w-4 h-4 mr-2" />
               Download
             </DropdownMenuItem>
-            <DropdownMenuItem className="text-destructive">
+            <DropdownMenuItem 
+              className="text-destructive"
+              onClick={() => handleRemove(source.id)}
+            >
               <Trash2 className="w-4 h-4 mr-2" />
               Remove
             </DropdownMenuItem>
@@ -251,7 +320,7 @@ export function SourcesPanel() {
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <File className="w-4 h-4 text-muted-foreground" />
-                <span className="text-sm font-medium">Uploading...</span>
+                <span className="text-sm font-medium truncate">{upload.name}</span>
               </div>
               <Progress value={upload.progress} className="h-1" />
             </div>

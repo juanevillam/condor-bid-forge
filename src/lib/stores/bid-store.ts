@@ -1,21 +1,58 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { Bid, BidActionsData } from '../types';
+import type { Bid, BidActionsData, Source } from '../types';
 
 interface BidStore {
   bids: Bid[];
+  bidSources: Record<string, Source[]>; // bidId -> sources
   addBid: (bid: Omit<Bid, 'id' | 'createdAt' | 'deadlines' | 'milestones' | 'actions'>) => string;
   updateBid: (id: string, updates: Partial<Bid>) => void;
   deleteBid: (id: string) => void;
   getBid: (id: string) => Bid | undefined;
   updateBidActions: (id: string, actions: Partial<BidActionsData>) => void;
   initializeBidActions: (id: string) => void;
+  // Source management
+  addSourceToBid: (bidId: string, source: Source, fileBlob: Blob) => void;
+  removeSourceFromBid: (bidId: string, sourceId: string) => void;
+  getBidSources: (bidId: string) => Source[];
+  downloadSource: (sourceId: string) => void;
 }
+
+// File storage helper functions
+const storeFileBlob = (sourceId: string, blob: Blob): void => {
+  const reader = new FileReader();
+  reader.onload = () => {
+    localStorage.setItem(`file_${sourceId}`, reader.result as string);
+  };
+  reader.readAsDataURL(blob);
+};
+
+const getFileBlob = (sourceId: string): Blob | null => {
+  const dataUrl = localStorage.getItem(`file_${sourceId}`);
+  if (!dataUrl) return null;
+  
+  const [header, data] = dataUrl.split(',');
+  const mime = header.match(/:(.*?);/)?.[1] || 'application/octet-stream';
+  const bytes = atob(data);
+  const arrayBuffer = new ArrayBuffer(bytes.length);
+  const uint8Array = new Uint8Array(arrayBuffer);
+  
+  for (let i = 0; i < bytes.length; i++) {
+    uint8Array[i] = bytes.charCodeAt(i);
+  }
+  
+  return new Blob([arrayBuffer], { type: mime });
+};
+
+const removeFileBlob = (sourceId: string): void => {
+  localStorage.removeItem(`file_${sourceId}`);
+};
 
 export const useBidStore = create<BidStore>()(
   persist(
     (set, get) => ({
       bids: [],
+      bidSources: {},
       
       addBid: (bidData) => {
         const id = crypto.randomUUID();
@@ -100,6 +137,57 @@ export const useBidStore = create<BidStore>()(
             notes: []
           });
         }
+      },
+
+      // Source management methods
+      addSourceToBid: (bidId, source, fileBlob) => {
+        storeFileBlob(source.id, fileBlob);
+        set((state) => ({
+          bidSources: {
+            ...state.bidSources,
+            [bidId]: [...(state.bidSources[bidId] || []), source]
+          }
+        }));
+      },
+
+      removeSourceFromBid: (bidId, sourceId) => {
+        removeFileBlob(sourceId);
+        set((state) => ({
+          bidSources: {
+            ...state.bidSources,
+            [bidId]: (state.bidSources[bidId] || []).filter(s => s.id !== sourceId)
+          }
+        }));
+      },
+
+      getBidSources: (bidId) => {
+        return get().bidSources[bidId] || [];
+      },
+
+      downloadSource: (sourceId) => {
+        const blob = getFileBlob(sourceId);
+        if (!blob) return;
+
+        // Find the source to get its name
+        const { bidSources } = get();
+        let sourceName = 'download';
+        
+        for (const sources of Object.values(bidSources)) {
+          const source = sources.find(s => s.id === sourceId);
+          if (source) {
+            sourceName = source.name;
+            break;
+          }
+        }
+
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = sourceName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
       }
     }),
     {
