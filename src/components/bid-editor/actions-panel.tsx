@@ -197,6 +197,8 @@ export function ActionsPanel({ bidId }: ActionsPanelProps) {
               </Card>
             </div>
 
+            <Separator />
+
             {/* Results */}
             <div>
               <div className="flex items-center gap-2 mb-3">
@@ -230,7 +232,7 @@ export function ActionsPanel({ bidId }: ActionsPanelProps) {
                       <div className="flex-1">
                         <h4 className="font-medium text-sm">Technical Proposal</h4>
                         <div className="flex items-center gap-2 mt-1">
-                          <Badge className={getStatusColor(bid.actions.proposal.technical.status)}>
+                          <Badge variant="outline" className={getStatusColor(bid.actions.proposal.technical.status)}>
                             {getStatusLabel(bid.actions.proposal.technical.status)}
                           </Badge>
                           {bid.actions.proposal.technical.owner && (
@@ -260,7 +262,7 @@ export function ActionsPanel({ bidId }: ActionsPanelProps) {
                       <div className="flex-1">
                         <h4 className="font-medium text-sm">Economic Proposal</h4>
                         <div className="flex items-center gap-2 mt-1">
-                          <Badge className={getStatusColor(bid.actions.proposal.economic.status)}>
+                          <Badge variant="outline" className={getStatusColor(bid.actions.proposal.economic.status)}>
                             {getStatusLabel(bid.actions.proposal.economic.status)}
                           </Badge>
                           {bid.actions.proposal.economic.owner && (
@@ -301,6 +303,8 @@ export function ActionsPanel({ bidId }: ActionsPanelProps) {
               </div>
             </div>
 
+            <Separator />
+
             {/* Stakeholders */}
             <div>
               <div className="flex items-center gap-2 mb-3">
@@ -321,7 +325,7 @@ export function ActionsPanel({ bidId }: ActionsPanelProps) {
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <span className="text-sm font-medium">{stakeholder.name}</span>
-                          <Badge className={
+                          <Badge variant="outline" className={
                             stakeholder.status === 'on_track' 
                               ? 'bg-emerald-500/15 text-emerald-500' 
                               : 'bg-amber-500/15 text-amber-500'
