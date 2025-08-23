@@ -22,7 +22,7 @@ export function Header() {
             onClick={() => navigate("/app")}
           >
             <h1 className="text-lg font-semibold">Condor AI</h1>
-            <p className="text-xs text-muted-foreground">Bid Proponent</p>
+            <p className="text-xs text-muted-foreground">KeenBID</p>
           </div>
         </div>
 

@@ -149,7 +149,7 @@ const Index = () => {
       <main className="container max-w-6xl mx-auto py-8 px-6">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-2xl font-semibold text-foreground">
-            {bids.length === 0 ? "Welcome to Bid Proponent" : "My bids"}
+            {bids.length === 0 ? "Welcome to KeenBID" : "My bids"}
           </h1>
           
           {bids.length > 0 && (
