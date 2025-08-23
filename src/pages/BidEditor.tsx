@@ -283,9 +283,7 @@ export default function BidEditor() {
 
             {/* Center Panel - Chat */}
             <Card className="flex-1 min-w-0 max-h-full flex flex-col">
-              <ScrollArea className="flex-1">
-                <ChatPanel messages={messages} onAddMessage={handleAddMessage} />
-              </ScrollArea>
+              <ChatPanel messages={messages} onAddMessage={handleAddMessage} />
             </Card>
 
             {/* Right Panel - Actions */}
