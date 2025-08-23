@@ -5,9 +5,47 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Upload, FileText } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Upload, FileText, X } from "lucide-react";
 import { useBidStore } from "@/lib/stores/bid-store";
-import type { Bid } from "@/lib/types";
+import type { Bid, Source } from "@/lib/types";
+
+const LABEL_COLORS = {
+  Legal: "bg-indigo-500/15 text-indigo-500",
+  Finance: "bg-emerald-500/15 text-emerald-500",
+  Technical: "bg-sky-500/15 text-sky-500",
+  Commercial: "bg-amber-500/15 text-amber-500",
+  Admin: "bg-slate-500/15 text-slate-500",
+} as const;
+
+// Helper function to get random labels
+const getRandomLabels = (): string[] => {
+  const availableLabels = ['Legal', 'Finance', 'Technical', 'Commercial', 'Admin'];
+  const numLabels = Math.random() < 0.5 ? 1 : 2; // 1 or 2 labels
+  const shuffled = [...availableLabels].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, numLabels);
+};
+
+// Helper function to format file size
+const formatFileSize = (bytes: number): string => {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+};
+
+// Helper function to get file type from extension
+const getFileType = (filename: string): 'pdf' | 'docx' | 'xlsx' | 'txt' => {
+  const ext = filename.split('.').pop()?.toLowerCase();
+  switch (ext) {
+    case 'pdf': return 'pdf';
+    case 'docx': case 'doc': return 'docx';
+    case 'xlsx': case 'xls': return 'xlsx';
+    case 'txt': return 'txt';
+    default: return 'txt';
+  }
+};
 
 interface BidSetupDialogProps {
   bid: Bid;
@@ -18,44 +56,70 @@ interface BidSetupDialogProps {
 }
 
 export function BidSetupDialog({ bid, open, onOpenChange, onComplete, onCancel }: BidSetupDialogProps) {
-  const { updateBid } = useBidStore();
+  const { updateBid, addSourceToBid } = useBidStore();
   const [formData, setFormData] = useState({
     title: bid.title || "",
     client: bid.client || "",
     submissionDeadline: bid.submissionDeadline || "",
     stage: bid.stage || "" as "discovery" | "proposal" | "review" | "submitted" | "",
     description: "",
-    files: [] as File[]
   });
+  const [uploadedSources, setUploadedSources] = useState<Source[]>([]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.title || !formData.client || !formData.submissionDeadline || !formData.stage) {
+    if (!formData.title) {
       return;
     }
 
     // Update the existing bid with the form data
     updateBid(bid.id, {
       title: formData.title,
-      client: formData.client,
-      submissionDeadline: formData.submissionDeadline,
-      stage: formData.stage
+      client: formData.client || undefined,
+      submissionDeadline: formData.submissionDeadline || undefined,
+      stage: formData.stage || undefined
     });
 
     onComplete();
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setFormData(prev => ({
-        ...prev,
-        files: [...prev.files, ...Array.from(e.target.files!)]
-      }));
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files) return;
+
+    const files = Array.from(e.target.files);
+    
+    for (const file of files) {
+      // Create source object like in sources-panel
+      const source: Source = {
+        id: crypto.randomUUID(),
+        name: file.name,
+        type: getFileType(file.name),
+        size: formatFileSize(file.size),
+        labels: getRandomLabels(),
+        createdAt: new Date().toISOString()
+      };
+
+      // Add to local state for UI display
+      setUploadedSources(prev => [...prev, source]);
+
+      // Store the file in the bid store
+      try {
+        addSourceToBid(bid.id, source, file);
+      } catch (error) {
+        console.error('Failed to upload file:', error);
+      }
     }
+
+    // Clear the input
+    e.target.value = '';
   };
 
-  const isFormValid = formData.title && formData.client && formData.submissionDeadline && formData.stage;
+  const handleRemoveSource = (sourceId: string) => {
+    setUploadedSources(prev => prev.filter(source => source.id !== sourceId));
+  };
+
+  const isFormValid = !!formData.title;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -85,31 +149,29 @@ export function BidSetupDialog({ bid, open, onOpenChange, onComplete, onCancel }
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="client">Client/Agency *</Label>
+                <Label htmlFor="client">Client/Agency</Label>
                 <Input
                   id="client"
                   placeholder="e.g., Department of Transportation"
                   value={formData.client}
                   onChange={(e) => setFormData(prev => ({ ...prev, client: e.target.value }))}
-                  required
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="deadline">Submission Deadline *</Label>
+                <Label htmlFor="deadline">Submission Deadline</Label>
                 <Input
                   id="deadline"
                   type="date"
                   value={formData.submissionDeadline}
                   onChange={(e) => setFormData(prev => ({ ...prev, submissionDeadline: e.target.value }))}
-                  required
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="stage">Current Stage *</Label>
+                <Label htmlFor="stage">Current Stage</Label>
                 <Select onValueChange={(value: "discovery" | "proposal" | "review" | "submitted") => setFormData(prev => ({ ...prev, stage: value }))}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select current stage" />
@@ -160,15 +222,39 @@ export function BidSetupDialog({ bid, open, onOpenChange, onComplete, onCancel }
               </label>
             </div>
 
-            {formData.files.length > 0 && (
+            {uploadedSources.length > 0 && (
               <div className="space-y-2">
                 <h4 className="text-sm font-medium">Selected Files:</h4>
-                <div className="space-y-1">
-                  {formData.files.map((file, index) => (
-                    <div key={index} className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <FileText className="w-4 h-4" />
-                      <span>{file.name}</span>
-                      <span>({(file.size / 1024 / 1024).toFixed(1)} MB)</span>
+                <div className="space-y-2">
+                  {uploadedSources.map((source) => (
+                    <div key={source.id} className="flex items-center justify-between p-2 border rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <FileText className="w-4 h-4" />
+                        <span className="text-sm">{source.name}</span>
+                        <span className="text-xs text-muted-foreground">({source.size})</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="flex gap-1">
+                          {source.labels?.map((label) => (
+                            <Badge 
+                              key={label} 
+                              variant="secondary" 
+                              className={`text-xs ${LABEL_COLORS[label as keyof typeof LABEL_COLORS]}`}
+                            >
+                              {label}
+                            </Badge>
+                          ))}
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRemoveSource(source.id)}
+                          className="h-6 w-6 p-0"
+                        >
+                          <X className="w-3 h-3" />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
