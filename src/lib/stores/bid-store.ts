@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Bid, BidActionsData, Source } from '../types';
+import { mockBid } from '../mock-data';
 
 interface BidStore {
   bids: Bid[];
@@ -61,7 +62,7 @@ export const useBidStore = create<BidStore>()(
           id,
           createdAt: new Date().toISOString(),
           deadlines: [],
-          milestones: []
+          milestones: mockBid.milestones
         };
         
         set((state) => ({
