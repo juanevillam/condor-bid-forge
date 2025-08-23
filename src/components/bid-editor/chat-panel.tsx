@@ -77,8 +77,8 @@ export function ChatPanel({ messages = mockMessages, onSendMessage, onAddMessage
     <div className="h-full flex flex-col">
       {/* Messages Area */}
       <div className="flex-1 min-h-0">
-        <ScrollArea className="h-full p-4">
-          <div className="space-y-4">
+        <ScrollArea className="h-full px-4">
+          <div className="space-y-4 py-4">
             {messages.map((message) => (
               <div key={message.id} className="flex gap-3">
                 {/* Avatar */}
