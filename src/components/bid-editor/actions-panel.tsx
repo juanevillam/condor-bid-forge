@@ -411,19 +411,19 @@ export function ActionsPanel({ bidId }: ActionsPanelProps) {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleEditNote(note.id)}>
-                              <Edit className="w-3 h-3 mr-2" />
-                              Edit
-                            </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleConvertNoteToSource(note.id)}>
-                              <FileDown className="w-3 h-3 mr-2" />
+                              <FileDown className="w-4 h-4 mr-2" />
                               Convert to source
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleEditNote(note.id)}>
+                              <Edit className="w-4 h-4 mr-2" />
+                              Edit
                             </DropdownMenuItem>
                             <DropdownMenuItem 
                               onClick={() => handleDeleteNote(note.id)}
                               className="text-destructive"
                             >
-                              <Trash2 className="w-3 h-3 mr-2" />
+                              <Trash2 className="w-4 h-4 mr-2" />
                               Delete
                             </DropdownMenuItem>
                           </DropdownMenuContent>
