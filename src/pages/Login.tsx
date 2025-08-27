@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { AuthLayout } from "@/components/layout/auth-layout";
-import { GoogleLogo, MicrosoftLogo } from "@/components/ui/brand-logos";
+import { GoogleLogo, MicrosoftLogo, FacebookLogo } from "@/components/ui/brand-logos";
 
 // TODO: Demo credentials are prefilled for development only - must not ship to production
 export default function Login() {
@@ -102,7 +102,7 @@ export default function Login() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-3 gap-3">
           <Button
             variant="outline"
             onClick={handleSocialLogin}
@@ -118,6 +118,14 @@ export default function Login() {
           >
             <MicrosoftLogo className="mr-2" size={16} />
             Microsoft
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleSocialLogin}
+            className="w-full hover:bg-accent/50"
+          >
+            <FacebookLogo className="mr-2" size={16} />
+            Facebook
           </Button>
         </div>
       </div>
